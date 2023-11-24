@@ -44,12 +44,17 @@ if command -v pip3 &> /dev/null; then
     pip_location="$pip_location/$api_location"
     echo "HiddifyPanel version: $version"
     echo "HiddifyPanel location: $pip_location"
+
     echo "Replacing files"
     cp /opt/Hiddify-API-Expanded/__init__.py "$pip_location/__init__.py"
     cp /opt/Hiddify-API-Expanded/resources.py "$pip_location/resources.py"
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel
+    #remove cache
+    cd /opt
+    rm -rf /opt/Hiddify-API-Expanded
     echo -e "${GREEN}Done${RESET}"
+    
     
 else
     display_error_and_exit "pip3 is not installed. Please install pip3 and try again."
