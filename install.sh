@@ -12,7 +12,7 @@ RESET='\033[0m' # Reset text color
 
 HIDY_BOT_ID="@HidyBotGroup"
 api_location="hiddifypanel/panel/commercial/restapi"
-$branch="main"
+
 # Function to display error messages and exit
 function display_error_and_exit() {
   echo -e "${RED}Error: $1${RESET}"
@@ -22,7 +22,7 @@ function display_error_and_exit() {
 echo "Cloning repo"
 repository_url="https://github.com/B3H1Z/Hiddify-API-Expanded.git"
 install_dir="/opt/Hiddify-API-Expanded"
-git clone -b "$branch" "$repository_url" "$install_dir" || display_error_and_exit "Failed to clone the repository."
+git clone "$repository_url" "$install_dir" || display_error_and_exit "Failed to clone the repository."
 cd "$install_dir" || display_error_and_exit "Failed to change directory."
 
 
