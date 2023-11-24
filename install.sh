@@ -12,6 +12,7 @@ RESET='\033[0m' # Reset text color
 
 HIDY_BOT_ID="@HidyBotGroup"
 api_location="hiddifypanel/panel/commercial/restapi"
+$branch="main"
 # Function to display error messages and exit
 function display_error_and_exit() {
   echo -e "${RED}Error: $1${RESET}"
