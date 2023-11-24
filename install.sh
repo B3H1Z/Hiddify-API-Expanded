@@ -49,7 +49,7 @@ if command -v pip3 &> /dev/null; then
     cp /opt/Hiddify-API-Expanded/resources.py "$pip_location/resources.py"
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel
-    echo "${GREEN}Done${RESET}"
+    echo -e "${GREEN}Done${RESET}"
     
 else
     display_error_and_exit "pip3 is not installed. Please install pip3 and try again."
