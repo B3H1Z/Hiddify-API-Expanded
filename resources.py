@@ -57,6 +57,9 @@ class bulkUsers(Resource):
 
         return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
     
+    def get(self):
+        return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
+    
 class Sub(Resource):
     def get(self):
         uuid = request.args.get("uuid")
