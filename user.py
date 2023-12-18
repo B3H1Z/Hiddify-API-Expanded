@@ -227,6 +227,8 @@ class UserView(FlaskView):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
         c = get_common_data(g.user_uuid, mode)
+        urls = None
+        resp = None
         if request.method == 'HEAD':
             resp = ""
         else:
