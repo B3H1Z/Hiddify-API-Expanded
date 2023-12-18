@@ -49,7 +49,7 @@ if command -v pip3 &> /dev/null; then
     echo "Replacing files"
     cp /opt/Hiddify-API-Expanded/__init__.py "$pip_location/__init__.py"
     cp /opt/Hiddify-API-Expanded/resources.py "$pip_location/resources.py"
-    cp /opt/Hiddify-API-Expanded/user.py "$$pip_location/$user_location/user.py"
+    cp /opt/Hiddify-API-Expanded/user.py "$pip_location/$user_location/user.py"
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel
     #remove cache
