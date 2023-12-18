@@ -238,7 +238,7 @@ class UserView(FlaskView):
             with open("../commercial/restapi/nodes.json", 'r') as f:
                 urls = json.load(f)
         except Exception as e:
-            return {"error": "we cant open file."}
+            pass
         
         if urls:
             resp += "\n"
