@@ -47,7 +47,7 @@ class UserResource(Resource):
 class bulkUsers(Resource):
     decorators = [hiddify.super_admin]
 
-     def get(self):
+    def get(self):
         return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
 
     def post(self):
