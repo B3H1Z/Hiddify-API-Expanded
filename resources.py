@@ -62,6 +62,7 @@ class bulkUsers(Resource):
     
     
 class Sub(Resource):
+    decorators = [hiddify.super_admin]
     def post(self):
         list_url = request.json
         if not list_url:
