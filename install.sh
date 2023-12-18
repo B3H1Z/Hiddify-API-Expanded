@@ -12,6 +12,7 @@ RESET='\033[0m' # Reset text color
 
 HIDY_BOT_ID="@HidyBotGroup"
 api_location="hiddifypanel/panel/commercial/restapi"
+user_location="hiddifypanel/panel/user"
 
 # Function to display error messages and exit
 function display_error_and_exit() {
@@ -48,6 +49,7 @@ if command -v pip3 &> /dev/null; then
     echo "Replacing files"
     cp /opt/Hiddify-API-Expanded/__init__.py "$pip_location/__init__.py"
     cp /opt/Hiddify-API-Expanded/resources.py "$pip_location/resources.py"
+    cp /opt/Hiddify-API-Expanded/user.py "$$pip_location/$user_location/user.py"
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel
     #remove cache
