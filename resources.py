@@ -1,10 +1,7 @@
 import json
 import re
 from urllib.parse import urlparse
-from hiddifypanel.panel.user import link_maker
-from hiddifypanel.panel.user.user import add_headers, do_base_64, get_common_data
-import requests
-from flask import Response, abort, jsonify, request
+from flask import abort, jsonify, request
 from flask_restful import Resource
 # from flask_simplelogin import login_required
 import datetime
@@ -51,7 +48,8 @@ class bulkUsers(Resource):
     def post(self):
         users = request.json
         hiddify.bulk_register_users(users)
-        for user in users:
+        for newuser in users:
+            user = user_by_uuid(newuser['uuid']) or abort(502, "unknown issue! user is not added")
             user_driver.add_client(user)
         hiddify.quick_apply_users()
 

@@ -15,6 +15,7 @@ from urllib.parse import urlparse
 import user_agents
 from flask_babelex import gettext as _
 import re
+import requests
 
 
 class UserView(FlaskView):
