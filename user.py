@@ -16,6 +16,7 @@ import user_agents
 from flask_babelex import gettext as _
 import re
 import requests
+import json
 
 
 class UserView(FlaskView):
@@ -235,7 +236,7 @@ class UserView(FlaskView):
             resp = link_maker.make_v2ray_configs(**c)
 
         try:
-            with open("../commercial/restapi/nodes.json", 'r') as f:
+            with open("nodes.json", 'r') as f:
                 urls = json.load(f)
         except Exception as e:
             pass

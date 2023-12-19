@@ -63,12 +63,16 @@ class bulkUsers(Resource):
     
 class Sub(Resource):
     decorators = [hiddify.super_admin]
-
     def post(self):
-        list_url = request.get_json()
-        with open("nodes.json", 'w') as f:
-            json.dump(list_url, f)
-        return jsonify({'status': 200, 'msg': 'Nodes was saved successfully'})
+        list_url = request.json
+        if not list_url:
+            abort(502, "List is empty")
+        try:
+            with open("nodes.json", 'w') as f:
+                json.dump(list_url, f)
+                return jsonify({'status': 200, 'msg': 'Nodes was saved successfully'})
+        except Exception as e:
+            return jsonify({'status': 502, 'msg': 'Nodes File not created\n{e}'})
 
 
 class AdminUserResource(Resource):
