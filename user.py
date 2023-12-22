@@ -247,20 +247,24 @@ class UserView(FlaskView):
                 BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                 PANEL_DIR = urlparse(url).path.split('/')
                 url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
-                req = requests.get(url_sub)
-                if req.status_code == 200:
-                    configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                    for config in configs:
-                        if config[0]:
-                            resp += config[0]+"\n"
-                        elif config[1]:
-                            resp += config[1]+"\n"
-                        elif config[2]:
-                            trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                            if trojan_sni:
-                                if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                    continue
-                            resp += config[2]+"\n"
+                try:
+                    req = requests.get(url_sub,timeout=2)
+                    if req.status_code == 200:
+                        configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
+                        for config in configs:
+                            if config[0]:
+                                resp += config[0]+"\n"
+                            elif config[1]:
+                                resp += config[1]+"\n"
+                            elif config[2]:
+                                trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                                if trojan_sni:
+                                    if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                        continue
+                                resp += config[2]+"\n"
+                except Exception as e:
+                    pass
+
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
