@@ -249,51 +249,51 @@ class UserView(FlaskView):
             resp = do_base_64(resp)
         return add_headers(resp, c)
     
-    # @ route('/hidybot.txt', methods=["GET", "HEAD"])
-    # def hidybot_configs(self, base64=False):
-    #     mode = "new"  # request.args.get("mode")
-    #     base64 = base64 or request.args.get("base64", "").lower() == "true"
-    #     c = get_common_data(g.user_uuid, mode)
-    #     urls = None
-    #     resp = None
-    #     if request.method == 'HEAD':
-    #         resp = ""
-    #     else:
-    #         resp = link_maker.make_v2ray_configs(**c)
+    @ route('/hidybot.txt', methods=["GET", "HEAD"])
+    def hidybot_configs(self, base64=False):
+        mode = "new"  # request.args.get("mode")
+        base64 = base64 or request.args.get("base64", "").lower() == "true"
+        c = get_common_data(g.user_uuid, mode)
+        urls = None
+        resp = None
+        if request.method == 'HEAD':
+            resp = ""
+        else:
+            resp = link_maker.make_v2ray_configs(**c)
 
-    #     try:
-    #         with open("nodes.json", 'r') as f:
-    #             urls = json.load(f)
-    #     except Exception as e:
-    #         pass
+        try:
+            with open("nodes.json", 'r') as f:
+                urls = json.load(f)
+        except Exception as e:
+            pass
         
-    #     if urls:
-    #         resp += "\n"
-    #         for url in urls:
-    #             BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-    #             PANEL_DIR = urlparse(url).path.split('/')
-    #             url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
-    #             try:
-    #                 req = requests.get(url_sub,timeout=2)
-    #                 if req.status_code == 200:
-    #                     configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-    #                     for config in configs:
-    #                         if config[0]:
-    #                             resp += config[0]+"\n"
-    #                         elif config[1]:
-    #                             resp += config[1]+"\n"
-    #                         elif config[2]:
-    #                             trojan_sni = re.search(r'sni=([^&]+)', config[2])
-    #                             if trojan_sni:
-    #                                 if trojan_sni.group(1) == "fake_ip_for_sub_link":
-    #                                     continue
-    #                             resp += config[2]+"\n"
-    #             except Exception as e:
-    #                 pass
+        if urls:
+            resp += "\n"
+            for url in urls:
+                BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                PANEL_DIR = urlparse(url).path.split('/')
+                url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                try:
+                    req = requests.get(url_sub,timeout=2)
+                    if req.status_code == 200:
+                        configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
+                        for config in configs:
+                            if config[0]:
+                                resp += config[0]+"\n"
+                            elif config[1]:
+                                resp += config[1]+"\n"
+                            elif config[2]:
+                                trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                                if trojan_sni:
+                                    if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                        continue
+                                resp += config[2]+"\n"
+                except Exception as e:
+                    pass
 
-    #     if base64:
-    #         resp = do_base_64(resp)
-    #     return add_headers(resp, c)
+        if base64:
+            resp = do_base_64(resp)
+        return add_headers(resp, c)
     
     # @ route('/autohidybot/', methods=["GET", "HEAD"])
     # def auto_hidybot_configs(self,url="https://user2.fly4net.click/eqQGE0A6hcP/0f4e5b2e-fffb-4509-87c9-e7a57d8b5445/all.txt",appname="v2rayng"):
