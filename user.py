@@ -1,5 +1,5 @@
 
-from flask import abort, render_template, request, Response, g, url_for, jsonify, flash
+from flask import abort, redirect, render_template, request, Response, g, url_for, jsonify, flash
 from wtforms.validators import Regexp, ValidationError
 import urllib
 import uuid
@@ -209,25 +209,6 @@ class UserView(FlaskView):
         base64 = base64 or request.args.get("base64", "").lower() == "true"
         c = get_common_data(g.user_uuid, mode)
         # response.content_type = 'text/plain';
-        if request.method == 'HEAD':
-            resp = ""
-        else:
-            resp = link_maker.make_v2ray_configs(**c)  # render_template('all_configs.txt', **c, base64=do_base_64)
-
-        # res = ""
-        # for line in resp.split("\n"):
-        #     if "vmess://" in line:
-        #         line = "vmess://"+do_base_64(line.replace("vmess://", ""))
-        #     res += line+"\n"
-        if base64:
-            resp = do_base_64(resp)
-        return add_headers(resp, c)
-    
-    @ route('/hidybot.txt', methods=["GET", "HEAD"])
-    def hidybot_configs(self, base64=False):
-        mode = "new"  # request.args.get("mode")
-        base64 = base64 or request.args.get("base64", "").lower() == "true"
-        c = get_common_data(g.user_uuid, mode)
         urls = None
         resp = None
         if request.method == 'HEAD':
@@ -264,10 +245,78 @@ class UserView(FlaskView):
                                 resp += config[2]+"\n"
                 except Exception as e:
                     pass
-
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
+    
+    # @ route('/hidybot.txt', methods=["GET", "HEAD"])
+    # def hidybot_configs(self, base64=False):
+    #     mode = "new"  # request.args.get("mode")
+    #     base64 = base64 or request.args.get("base64", "").lower() == "true"
+    #     c = get_common_data(g.user_uuid, mode)
+    #     urls = None
+    #     resp = None
+    #     if request.method == 'HEAD':
+    #         resp = ""
+    #     else:
+    #         resp = link_maker.make_v2ray_configs(**c)
+
+    #     try:
+    #         with open("nodes.json", 'r') as f:
+    #             urls = json.load(f)
+    #     except Exception as e:
+    #         pass
+        
+    #     if urls:
+    #         resp += "\n"
+    #         for url in urls:
+    #             BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+    #             PANEL_DIR = urlparse(url).path.split('/')
+    #             url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+    #             try:
+    #                 req = requests.get(url_sub,timeout=2)
+    #                 if req.status_code == 200:
+    #                     configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
+    #                     for config in configs:
+    #                         if config[0]:
+    #                             resp += config[0]+"\n"
+    #                         elif config[1]:
+    #                             resp += config[1]+"\n"
+    #                         elif config[2]:
+    #                             trojan_sni = re.search(r'sni=([^&]+)', config[2])
+    #                             if trojan_sni:
+    #                                 if trojan_sni.group(1) == "fake_ip_for_sub_link":
+    #                                     continue
+    #                             resp += config[2]+"\n"
+    #             except Exception as e:
+    #                 pass
+
+    #     if base64:
+    #         resp = do_base_64(resp)
+    #     return add_headers(resp, c)
+    
+    # @ route('/autohidybot/', methods=["GET", "HEAD"])
+    # def auto_hidybot_configs(self,url="https://user2.fly4net.click/eqQGE0A6hcP/0f4e5b2e-fffb-4509-87c9-e7a57d8b5445/all.txt",appname="v2rayng"):
+    #     url = url or request.args.get("url")
+    #     appname = appname or request.args.get("appname").lower()
+    #     base64 =  do_base_64(url)
+    #     if appname == "v2rayng":
+    #         return redirect(f"v2rayng://install-sub/?url={url}")
+    #     elif appname == "streisand":
+    #          return redirect(f"streisand://import/{url}")
+    #     elif appname == "shadowrocket":
+    #          return redirect(f"sub://{base64}")
+    #     elif appname == "hiddify":
+    #          return redirect(f"hiddify://install-config/?url={url}")
+    #     elif appname == "loon":
+    #          return redirect(f"loon://import?nodelist={url}")
+    #     elif appname == "clash":
+    #          return redirect(f"clash://install-config?url={url}")
+    #     elif appname == "v2box":
+    #          return redirect(f"v2box://install-sub/?url={url}")
+    #     elif appname == "v2box1":
+    #          return redirect(f"v2box://install-sub/?url={base64}")
+
 
 
     @ route('/manifest.webmanifest')
