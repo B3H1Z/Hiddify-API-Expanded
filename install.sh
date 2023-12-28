@@ -44,13 +44,13 @@ if command -v pip3 &> /dev/null; then
     if [ $? -eq 0 ]; then
         echo "HiddifyPanel version is found"
     else
-        show_error_and_exit "HiddifyPanel is not installed. Please install HiddifyPanel and try again."
+        display_error_and_exit "HiddifyPanel is not installed. Please install HiddifyPanel and try again."
     fi
     pip_location=$(pip3 show hiddifypanel | grep -oP 'Location: \K.*')
     if [ $? -eq 0 ]; then
         echo "HiddifyPanel location is found"
     else
-        show_error_and_exit "HiddifyPanel is not installed. Please install HiddifyPanel and try again."
+        display_error_and_exit "HiddifyPanel is not installed. Please install HiddifyPanel and try again."
     fi
     pip_location_1="$pip_location/$api_location"
     echo "HiddifyPanel version: $version"
