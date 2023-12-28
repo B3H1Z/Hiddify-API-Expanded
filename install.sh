@@ -19,9 +19,19 @@ function display_error_and_exit() {
   echo -e "${YELLOW}${HIDY_BOT_ID}${RESET}"
   exit 1
 }
+
+echo "Installing dependencies"
+sudo rm -rf /usr/lib/python3/dist-packages/OpenSSL
+sudo pip3 install pyopenssl
+sudo pip3 install pyopenssl --upgrade
+
 echo "Cloning repo"
 repository_url="https://github.com/B3H1Z/Hiddify-API-Expanded.git"
 install_dir="/opt/Hiddify-API-Expanded"
+if [ -d "$install_dir" ]; then
+    echo "Removing old installation"
+    rm -rf "$install_dir"
+fi
 git clone "$repository_url" "$install_dir" || display_error_and_exit "Failed to clone the repository."
 cd "$install_dir" || display_error_and_exit "Failed to change directory."
 
