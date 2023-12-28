@@ -1,10 +1,7 @@
 import json
 import re
 from urllib.parse import urlparse
-from hiddifypanel.panel.user import link_maker
-from hiddifypanel.panel.user.user import add_headers, do_base_64, get_common_data
-import requests
-from flask import Response, abort, jsonify, request
+from flask import abort, jsonify, request
 from flask_restful import Resource
 # from flask_simplelogin import login_required
 import datetime
@@ -48,73 +45,34 @@ class UserResource(Resource):
         return jsonify({'status': 200, 'msg': 'ok'})
 
 class bulkUsers(Resource):
+    decorators = [hiddify.super_admin]
+
+    def get(self):
+        return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
+
     def post(self):
         users = request.json
         hiddify.bulk_register_users(users)
-        for user in users:
+        for newuser in users:
+            user = user_by_uuid(newuser['uuid']) or abort(502, "unknown issue! user is not added")
             user_driver.add_client(user)
         hiddify.quick_apply_users()
 
         return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
     
+    
 class Sub(Resource):
-    def get(self):
-        uuid = request.args.get("uuid")
-        base64 = request.args.get("base64")
-        mode = "new"  # request.args.get("mode")
-        if not uuid:
-            return {"error": "UUID needed."}
-        urls = []
-        url = request.url
-        BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-        PANEL_DIR = urlparse(url).path.split('/')
-        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{uuid}/all.txt"
-        req = requests.get(url_sub)
-        sub = None
-        if req.status_code == 200:
-            sub = req.text
-        # c = get_common_data(uuid, mode)
-        # sub = link_maker.make_v2ray_configs(**c)  # render_template('all_configs.txt', **c, base64=do_base_64)
-        if not sub:
-            return {"error": "we cant find sub."}
-        try:
-            with open("nodes.json", 'r') as f:
-                urls = json.load(f)
-        except Exception as e:
-            return {"error": "we cant open file."}
-        
-        if urls:
-            sub += "\n"
-            for url in urls:
-                BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                PANEL_DIR = urlparse(url).path.split('/')
-                url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{uuid}/all.txt"
-                req = requests.get(url_sub)
-                if req.status_code == 200:
-                    configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                    for config in configs:
-                        if config[0]:
-                            sub += config[0]+"\n"
-                        elif config[1]:
-                            sub += config[1]+"\n"
-                        elif config[2]:
-                            trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                            if trojan_sni:
-                                if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                    continue
-                            sub += config[2]+"\n"
-        if base64.lower() == "true":
-            sub = do_base_64(sub)
-        resp = Response(sub)
-        resp.mimetype = "text/plain"
-        return resp
-        # return add_headers(sub, c)
+    decorators = [hiddify.super_admin]
     def post(self):
-        list_url = request.get_json()
-        with open("nodes.json", 'w') as f:
-            json.dump(list_url, f)
-       
-        return jsonify({'status': 200, 'msg': 'Nodes was saved successfully'})
+        list_url = request.json
+        if not list_url:
+            abort(502, "List is empty")
+        try:
+            with open("nodes.json", 'w') as f:
+                json.dump(list_url, f)
+                return jsonify({'status': 200, 'msg': 'Nodes was saved successfully'})
+        except Exception as e:
+            return jsonify({'status': 502, 'msg': 'Nodes File not created\n{e}'})
 
 
 class AdminUserResource(Resource):
