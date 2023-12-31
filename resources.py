@@ -19,7 +19,7 @@ class UserResource(Resource):
     decorators = [hiddify.super_admin]
 
     def get(self):
-        uuid = request.args.get('uuid') or abort(422, "Parameter issue: 'uuid'")
+        uuid = request.args.get('uuid') 
         actoin = request.args.get('action')
         if uuid and not actoin:
             user = user_by_uuid(uuid) or abort(404, "user not found")
