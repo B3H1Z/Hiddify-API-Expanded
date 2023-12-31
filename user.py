@@ -229,7 +229,7 @@ class UserView(FlaskView):
                 PANEL_DIR = urlparse(url).path.split('/')
                 url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
                 try:
-                    req = requests.get(url_sub,timeout=2)
+                    req = requests.get(url_sub,timeout=15)
                     if req.status_code == 200:
                         configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
                         for config in configs:
