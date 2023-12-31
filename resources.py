@@ -37,8 +37,8 @@ class UserResource(Resource):
     
             except Exception as e:
                 return jsonify({'status': 502, 'msg': 'user not deleted','error':str(e),'line':str(e.__traceback__.tb_lineno)})
-        else:
-            return jsonify({'status': 204, 'msg': 'user not found'})
+        users = User.query.all() or abort(502, "WTF!")
+        return jsonify([user.to_dict() for user in users])
 
     def post(self):
         data = request.json
