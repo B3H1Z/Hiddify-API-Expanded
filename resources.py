@@ -19,7 +19,7 @@ class UserResource(Resource):
     decorators = [hiddify.super_admin]
 
     def get(self):
-        uuid = request.args.get('uuid') or abort(422, "Parameter issue: 'uuid'")
+        uuid = request.args.get('uuid') 
         actoin = request.args.get('action')
         if uuid and not actoin:
             user = user_by_uuid(uuid) or abort(404, "user not found")
@@ -37,8 +37,8 @@ class UserResource(Resource):
     
             except Exception as e:
                 return jsonify({'status': 502, 'msg': 'user not deleted','error':str(e),'line':str(e.__traceback__.tb_lineno)})
-        else:
-            return jsonify({'status': 204, 'msg': 'user not found'})
+        users = User.query.all() or abort(502, "WTF!")
+        return jsonify([user.to_dict() for user in users])
 
     def post(self):
         data = request.json
