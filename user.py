@@ -215,6 +215,24 @@ class UserView(FlaskView):
             resp = ""
         else:
             resp = link_maker.make_v2ray_configs(**c)
+        configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
+        for config in configs:
+            if config[2]:
+                trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                if trojan_sni:
+                    if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                        encoded_name = f"👤:{c['user'].name}"
+                        add_name = config[2] + encoded_name
+                        resp = resp.replace(config[2], add_name)
+        # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
+        # if match:
+        #     # Add encoded_name after #
+           
+        #     # Wrap the user name in Unicode control characters to specify left-to-right display
+        #     # user_name = '\u202A' + user_name + '\u202C'
+        #     # encoded_name = hiddify.url_encode(user_name)
+        #     # encoded_name = hiddify.url_encode(f"👤User:{c['user'].name} ")
+        #     resp = resp[:match.end()] + encoded_name + resp[match.end():]
 
         try:
             with open("nodes.json", 'r') as f:
@@ -260,7 +278,11 @@ class UserView(FlaskView):
             resp = ""
         else:
             resp = link_maker.make_v2ray_configs(**c)
-
+        match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
+        if match:
+            # Add encoded_name after #
+            encoded_name = hiddify.url_encode(f"👤:{c['user'].name}")
+            resp = resp[:match.end()] + encoded_name + resp[match.end():]
         try:
             with open("nodes.json", 'r') as f:
                 urls = json.load(f)

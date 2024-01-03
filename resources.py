@@ -38,7 +38,9 @@ class UserResource(Resource):
         return jsonify({'status': 200, 'msg': 'ok'})
 
     def delete(self):
-        uuid = request.args.get('uuid') or abort(422, "Parameter issue: 'uuid'")
+        # uuid = request.args.get('uuid') or abort(422, "Parameter issue: 'uuid'")
+        data = request.json
+        uuid = data.get('uuid') or abort(422, "Parameter issue: 'uuid'")
         user = user_by_uuid(uuid) or abort(404, "user not found")
         user.remove()
         hiddify.quick_apply_users()
@@ -48,7 +50,9 @@ class bulkUsers(Resource):
     decorators = [hiddify.super_admin]
 
     def get(self):
-        return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
+        uuid_list  = request.json
+        users = User.query.filter(User.uuid.in_(uuid_list)).all()
+        return jsonify([user.to_dict() for user in users])
 
     def post(self):
         users = request.json
@@ -63,6 +67,10 @@ class bulkUsers(Resource):
     
 class Sub(Resource):
     decorators = [hiddify.super_admin]
+
+    def get(self):
+        return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
+
     def post(self):
         list_url = request.json
         if not list_url:
