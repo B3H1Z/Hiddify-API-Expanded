@@ -247,10 +247,10 @@ class UserView(FlaskView):
         if urls:
             resp += "\n"
             for url in urls:
-                BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                PANEL_DIR = urlparse(url).path.split('/')
-                url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
                 try:
+                    BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                    PANEL_DIR = urlparse(url).path.split('/')
+                    url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
                     req = requests.get(url_sub,timeout=5)
                     if req.status_code == 200:
                         configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -283,18 +283,36 @@ class UserView(FlaskView):
     def hidybot_configs(self, base64=False):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
+        name = name or request.args.get("name", "").lower() == "true"
+        randomize = randomize or request.args.get("randomize", "").lower() == "true"
         c = get_common_data(g.user_uuid, mode)
+        # response.content_type = 'text/plain';
         urls = None
         resp = None
         if request.method == 'HEAD':
             resp = ""
         else:
             resp = link_maker.make_v2ray_configs(**c)
-        match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
-        if match:
-            # Add encoded_name after #
-            encoded_name = hiddify.url_encode(f"👤:{c['user'].name}")
-            resp = resp[:match.end()] + encoded_name + resp[match.end():]
+        if name:
+            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
+            for config in configs:
+                if config[2]:
+                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                    if trojan_sni:
+                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                            encoded_name = f"👤:{c['user'].name}"
+                            add_name = config[2] + encoded_name
+                            resp = resp.replace(config[2], add_name)
+        # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
+        # if match:
+        #     # Add encoded_name after #
+           
+        #     # Wrap the user name in Unicode control characters to specify left-to-right display
+        #     # user_name = '\u202A' + user_name + '\u202C'
+        #     # encoded_name = hiddify.url_encode(user_name)
+        #     # encoded_name = hiddify.url_encode(f"👤User:{c['user'].name} ")
+        #     resp = resp[:match.end()] + encoded_name + resp[match.end():]
+
         try:
             with open("nodes.json", 'r') as f:
                 urls = json.load(f)
@@ -304,11 +322,11 @@ class UserView(FlaskView):
         if urls:
             resp += "\n"
             for url in urls:
-                BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                PANEL_DIR = urlparse(url).path.split('/')
-                url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
                 try:
-                    req = requests.get(url_sub,timeout=2)
+                    BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                    PANEL_DIR = urlparse(url).path.split('/')
+                    url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                    req = requests.get(url_sub,timeout=5)
                     if req.status_code == 200:
                         configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
                         for config in configs:
@@ -324,7 +342,14 @@ class UserView(FlaskView):
                                 resp += config[2]+"\n"
                 except Exception as e:
                     pass
-
+        if randomize:
+            configs = resp.split('\n')
+            if len(configs) > 2:
+                first_config = configs[0]
+                rest_configs = configs[1:]
+                random.shuffle(configs)
+                configs = [first_config] + rest_configs
+            resp = ''.join(configs)
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
