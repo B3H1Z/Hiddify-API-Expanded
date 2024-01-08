@@ -268,13 +268,13 @@ class UserView(FlaskView):
                 except Exception as e:
                     pass
         if randomize:
-            configs = resp.split('\n')
-            if len(configs) > 2:
-                first_config = configs[0]
-                rest_configs = configs[1:]
-                random.shuffle(configs)
-                configs = [first_config] + rest_configs
-            resp = ''.join(configs)
+            configs = [line for line in resp.split('\n') if line.strip() != '']
+            if len(configs) > 3:
+                first_configs = configs[0:2]
+                rest_configs = configs[2:]
+                random.shuffle(rest_configs)
+                configs = first_configs + rest_configs
+            resp = '\n'.join(configs)
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
@@ -343,13 +343,13 @@ class UserView(FlaskView):
                 except Exception as e:
                     pass
         if randomize:
-            configs = resp.split('\n')
-            if len(configs) > 2:
-                first_config = configs[0]
-                rest_configs = configs[1:]
-                random.shuffle(configs)
-                configs = [first_config] + rest_configs
-            resp = ''.join(configs)
+            configs = [line for line in resp.split('\n') if line.strip() != '']
+            if len(configs) > 3:
+                first_configs = configs[0:2]
+                rest_configs = configs[2:]
+                random.shuffle(rest_configs)
+                configs = first_configs + rest_configs
+            resp = '\n'.join(configs)
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
