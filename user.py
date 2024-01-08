@@ -274,7 +274,7 @@ class UserView(FlaskView):
                 rest_configs = configs[1:]
                 random.shuffle(configs)
                 configs = [first_config] + rest_configs
-            resp = ''.join(configs)
+            resp = '\n'.join(configs)
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
@@ -349,7 +349,7 @@ class UserView(FlaskView):
                 rest_configs = configs[1:]
                 random.shuffle(configs)
                 configs = [first_config] + rest_configs
-            resp = ''.join(configs)
+            resp = '\n'.join(configs)
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
