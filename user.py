@@ -17,6 +17,7 @@ from flask_babelex import gettext as _
 import re
 import requests
 import json
+import random
 
 
 class UserView(FlaskView):
@@ -204,9 +205,11 @@ class UserView(FlaskView):
         return add_headers(resp, c)
 
     @ route('/all.txt', methods=["GET", "HEAD"])
-    def all_configs(self, base64=False):
+    def all_configs(self, base64=False, name=False, randomize=False):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
+        name = name or request.args.get("name", "").lower() == "true"
+        randomize = randomize or request.args.get("randomize", "").lower() == "true"
         c = get_common_data(g.user_uuid, mode)
         # response.content_type = 'text/plain';
         urls = None
@@ -215,15 +218,16 @@ class UserView(FlaskView):
             resp = ""
         else:
             resp = link_maker.make_v2ray_configs(**c)
-        configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
-        for config in configs:
-            if config[2]:
-                trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                if trojan_sni:
-                    if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                        encoded_name = f"👤:{c['user'].name}"
-                        add_name = config[2] + encoded_name
-                        resp = resp.replace(config[2], add_name)
+        if name:
+            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
+            for config in configs:
+                if config[2]:
+                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                    if trojan_sni:
+                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                            encoded_name = f"👤:{c['user'].name}"
+                            add_name = config[2] + encoded_name
+                            resp = resp.replace(config[2], add_name)
         # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
         # if match:
         #     # Add encoded_name after #
@@ -263,6 +267,14 @@ class UserView(FlaskView):
                                 resp += config[2]+"\n"
                 except Exception as e:
                     pass
+        if randomize:
+            configs = resp.split('\n')
+            if len(configs) > 2:
+                first_config = configs[0]
+                rest_configs = configs[1:]
+                random.shuffle(configs)
+                configs = [first_config] + rest_configs
+            resp = ''.join(configs)
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
