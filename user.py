@@ -205,10 +205,10 @@ class UserView(FlaskView):
         return add_headers(resp, c)
 
     @ route('/all.txt', methods=["GET", "HEAD"])
-    def all_configs(self, base64=False, name=False, randomize=False):
+    def all_configs(self, base64=False, username=False, randomize=False):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
-        name = name or request.args.get("name", "").lower() == "true"
+        username = username or request.args.get("username", "").lower() == "true"
         randomize = randomize or request.args.get("randomize", "").lower() == "true"
         c = get_common_data(g.user_uuid, mode)
         # response.content_type = 'text/plain';
@@ -218,7 +218,7 @@ class UserView(FlaskView):
             resp = ""
         else:
             resp = link_maker.make_v2ray_configs(**c)
-        if name:
+        if username:
             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
             for config in configs:
                 if config[2]:
