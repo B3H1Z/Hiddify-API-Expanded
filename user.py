@@ -210,6 +210,12 @@ class UserView(FlaskView):
         base64 = base64 or request.args.get("base64", "").lower() == "true"
         username = username or request.args.get("username", "").lower() == "true"
         randomize = randomize or request.args.get("randomize", "").lower() == "true"
+        # limit = limit or request.args.get("limit", "")
+        # if limit:
+        #     try:
+        #         limit = int(limit)
+        #     except Exception as e:
+        #         limit = None
         c = get_common_data(g.user_uuid, mode)
         # response.content_type = 'text/plain';
         urls = None
@@ -275,16 +281,24 @@ class UserView(FlaskView):
                 random.shuffle(rest_configs)
                 configs = first_configs + rest_configs
             resp = '\n'.join(configs)
+        # if limit:
+
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
     
     @ route('/hidybot.txt', methods=["GET", "HEAD"])
-    def hidybot_configs(self, base64=False):
+    def hidybot_configs(self, base64=False, username=False, randomize=False):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
-        name = name or request.args.get("name", "").lower() == "true"
+        username = username or request.args.get("username", "").lower() == "true"
         randomize = randomize or request.args.get("randomize", "").lower() == "true"
+        # limit = limit or request.args.get("limit", "")
+        # if limit:
+        #     try:
+        #         limit = int(limit)
+        #     except Exception as e:
+        #         limit = None
         c = get_common_data(g.user_uuid, mode)
         # response.content_type = 'text/plain';
         urls = None
@@ -293,7 +307,7 @@ class UserView(FlaskView):
             resp = ""
         else:
             resp = link_maker.make_v2ray_configs(**c)
-        if name:
+        if username:
             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
             for config in configs:
                 if config[2]:
@@ -350,9 +364,12 @@ class UserView(FlaskView):
                 random.shuffle(rest_configs)
                 configs = first_configs + rest_configs
             resp = '\n'.join(configs)
+        # if limit:
+
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
+    
     
     # @ route('/autohidybot/', methods=["GET", "HEAD"])
     # def auto_hidybot_configs(self,url="https://user2.fly4net.click/eqQGE0A6hcP/0f4e5b2e-fffb-4509-87c9-e7a57d8b5445/all.txt",appname="v2rayng"):
