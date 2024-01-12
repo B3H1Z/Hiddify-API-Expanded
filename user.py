@@ -79,7 +79,7 @@ class UserView(FlaskView):
     def force_sub(self, username=False, randomize=False):
         username = username or request.args.get("username", "").lower() == "true"
         randomize = randomize or request.args.get("randomize", "").lower()
-        return self.get_proper_config(username=username, randomize=randomize) or self.all_configs(base64=False, username=username, randomize=randomize)
+        return self.get_proper_config(username=username, randomize=randomize) or self.all_configs(base64=True, username=username, randomize=randomize)
 
     def get_proper_config(self, username=False, randomize=False):
         ua = request.user_agent.string
@@ -97,7 +97,7 @@ class UserView(FlaskView):
 
         # if any([p in ua for p in ['FoXray', 'HiddifyNG','Fair%20VPN' ,'v2rayNG', 'SagerNet']]):
         if re.match('^(Hiddify|FoXray|Fair|v2rayNG|SagerNet|Shadowrocket|V2Box|Loon|Liberty)', ua, re.IGNORECASE):
-            return self.all_configs(base64=False, username=username, randomize=randomize)
+            return self.all_configs(base64=True, username=username, randomize=randomize)
 
     @ route('/auto')
     def auto_select(self):
@@ -233,7 +233,10 @@ class UserView(FlaskView):
                     trojan_sni = re.search(r'sni=([^&]+)', config[2])
                     if trojan_sni:
                         if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                            encoded_name = f"👤:{c['user'].name}"
+                            if hconfig(ConfigEnum.lang) == 'fa':
+                                encoded_name = f"کاربر:{c['user'].name}"
+                            else:
+                                encoded_name = f"👤:{c['user'].name}"
                             add_name = config[2] + encoded_name
                             resp = resp.replace(config[2], add_name)
         # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
