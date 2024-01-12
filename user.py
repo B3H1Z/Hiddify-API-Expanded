@@ -233,7 +233,10 @@ class UserView(FlaskView):
                     trojan_sni = re.search(r'sni=([^&]+)', config[2])
                     if trojan_sni:
                         if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                            encoded_name = f"👤:{c['user'].name}"
+                            if hconfig(ConfigEnum.lang) == 'fa':
+                                encoded_name = f"کاربر:{c['user'].name}"
+                            else:
+                                encoded_name = f"👤:{c['user'].name}"
                             add_name = config[2] + encoded_name
                             resp = resp.replace(config[2], add_name)
         # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
