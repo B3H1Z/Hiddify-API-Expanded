@@ -79,7 +79,7 @@ class UserView(FlaskView):
     def force_sub(self, username=False, randomize=False):
         username = username or request.args.get("username", "").lower() == "true"
         randomize = randomize or request.args.get("randomize", "").lower()
-        return self.get_proper_config(username=username, randomize=randomize) or self.all_configs(base64=False, username=username, randomize=randomize)
+        return self.get_proper_config(username=username, randomize=randomize) or self.all_configs(base64=True, username=username, randomize=randomize)
 
     def get_proper_config(self, username=False, randomize=False):
         ua = request.user_agent.string
