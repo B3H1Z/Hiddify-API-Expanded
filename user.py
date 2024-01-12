@@ -97,7 +97,7 @@ class UserView(FlaskView):
 
         # if any([p in ua for p in ['FoXray', 'HiddifyNG','Fair%20VPN' ,'v2rayNG', 'SagerNet']]):
         if re.match('^(Hiddify|FoXray|Fair|v2rayNG|SagerNet|Shadowrocket|V2Box|Loon|Liberty)', ua, re.IGNORECASE):
-            return self.all_configs(base64=False, username=username, randomize=randomize)
+            return self.all_configs(base64=True, username=username, randomize=randomize)
 
     @ route('/auto')
     def auto_select(self):
