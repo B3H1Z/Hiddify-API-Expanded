@@ -11,7 +11,7 @@ from hiddifypanel.panel import hiddify, clean_ip
 from . import link_maker
 from flask_classful import FlaskView, route
 import random
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 import user_agents
 from flask_babelex import gettext as _
 import re
@@ -76,12 +76,10 @@ class UserView(FlaskView):
 
     @route('/sub')
     @route('/sub/')
-    def force_sub(self, username=False, randomize=False):
-        username = username or request.args.get("username", "").lower() == "true"
-        randomize = randomize or request.args.get("randomize", "").lower()
-        return self.get_proper_config(username=username, randomize=randomize) or self.all_configs(base64=True, username=username, randomize=randomize)
+    def force_sub(self):
+        return self.get_proper_config() or self.all_configs(base64=True)
 
-    def get_proper_config(self, username=False, randomize=False):
+    def get_proper_config(self):
         ua = request.user_agent.string
         if re.match('^Mozilla', ua, re.IGNORECASE):
             return None
@@ -97,7 +95,7 @@ class UserView(FlaskView):
 
         # if any([p in ua for p in ['FoXray', 'HiddifyNG','Fair%20VPN' ,'v2rayNG', 'SagerNet']]):
         if re.match('^(Hiddify|FoXray|Fair|v2rayNG|SagerNet|Shadowrocket|V2Box|Loon|Liberty)', ua, re.IGNORECASE):
-            return self.all_configs(base64=True, username=username, randomize=randomize)
+            return self.all_configs(base64=True)
 
     @ route('/auto')
     def auto_select(self):
@@ -207,17 +205,25 @@ class UserView(FlaskView):
         return add_headers(resp, c)
 
     @ route('/all.txt', methods=["GET", "HEAD"])
-    def all_configs(self, base64=False, username=False, randomize=None):
+    def all_configs(self, base64=False):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
-        username = username or request.args.get("username", "").lower() == "true"
-        randomize = randomize or request.args.get("randomize", "").lower()
-        # limit = limit or request.args.get("limit", "")
-        # if limit:
-        #     try:
-        #         limit = int(limit)
-        #     except Exception as e:
-        #         limit = None
+        bot_configs = None
+        try:
+            with open("hidybotconfigs.json", 'r') as f:
+                bot_configs = json.load(f)
+        except Exception as e:
+            pass
+        if bot_configs:
+            username = bot_configs.get("username", False)
+            randomize = bot_configs.get("randomize", False)
+            randomize_mode = bot_configs.get("randomize_mode", "servers")
+            # limit = limit or request.args.get("limit", "")
+            # if limit:
+            #     try:
+            #         limit = int(limit)
+            #     except Exception as e:
+            #         limit = None
         c = get_common_data(g.user_uuid, mode)
         # response.content_type = 'text/plain';
         urls = None
@@ -233,10 +239,11 @@ class UserView(FlaskView):
                     trojan_sni = re.search(r'sni=([^&]+)', config[2])
                     if trojan_sni:
                         if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                            if hconfig(ConfigEnum.lang) == 'fa':
-                                encoded_name = f"کاربر:{c['user'].name}"
-                            else:
-                                encoded_name = f"👤:{c['user'].name}"
+                            # if hconfig(ConfigEnum.lang) == 'fa':
+                            #     encoded_name = f" کاربر:{c['user'].name}"
+                            # else:
+                            #     encoded_name = f" 👤:{c['user'].name}"
+                            encoded_name = f" 👤:{c['user'].name}"
                             add_name = config[2] + encoded_name
                             resp = resp.replace(config[2], add_name)
         # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
@@ -248,94 +255,95 @@ class UserView(FlaskView):
         #     # encoded_name = hiddify.url_encode(user_name)
         #     # encoded_name = hiddify.url_encode(f"👤User:{c['user'].name} ")
         #     resp = resp[:match.end()] + encoded_name + resp[match.end():]
-        if randomize == "servers":
-            fake_config = ""
-            configs_list = []
-            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
-            real_configs = ""
-            for config in configs:
-                if config[0]:
-                    real_configs += config[0]+"\n"
-                elif config[1]:
-                    real_configs += config[1]+"\n"
-                elif config[2]:
-                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                    if trojan_sni:
-                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                            fake_config += config[2]+"\n"
-                            continue
-                    real_configs += config[2]+"\n"
-            configs_list.append(real_configs)
-            try:
-                with open("nodes.json", 'r') as f:
-                    urls = json.load(f)
-            except Exception as e:
-                pass
-            
-            if urls:
-                for url in urls:
-                    try:
-                        real_configs = ""
-                        BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                        PANEL_DIR = urlparse(url).path.split('/')
-                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
-                        req = requests.get(url_sub,timeout=10)
-                        if req.status_code == 200:
-                            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                            for config in configs:
-                                if config[0]:
-                                    real_configs += config[0]+"\n"
-                                elif config[1]:
-                                    real_configs += config[1]+"\n"
-                                elif config[2]:
-                                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                    if trojan_sni:
-                                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                            continue
-                                    real_configs += config[2]+"\n"
-                            configs_list.append(real_configs)
-                    except Exception as e:
-                        pass
-            if configs_list:
-                random.shuffle(configs_list)
-                resp = fake_config + '\n'.join(configs_list)
-        elif randomize == "configs":
-            try:
-                with open("nodes.json", 'r') as f:
-                    urls = json.load(f)
-            except Exception as e:
-                pass
-            
-            if urls:
-                resp += "\n"
-                for url in urls:
-                    try:
-                        BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                        PANEL_DIR = urlparse(url).path.split('/')
-                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
-                        req = requests.get(url_sub,timeout=10)
-                        if req.status_code == 200:
-                            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                            for config in configs:
-                                if config[0]:
-                                    resp += config[0]+"\n"
-                                elif config[1]:
-                                    resp += config[1]+"\n"
-                                elif config[2]:
-                                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                    if trojan_sni:
-                                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                            continue
-                                    resp += config[2]+"\n"
-                    except Exception as e:
-                        pass
-            configs = [line for line in resp.split('\n') if line.strip() != '']
-            if len(configs) > 3:
-                first_configs = configs[0:2]
-                rest_configs = configs[2:]
-                random.shuffle(rest_configs)
-                configs = first_configs + rest_configs
-            resp = '\n'.join(configs)
+        if randomize:
+            if randomize_mode == "servers":
+                fake_config = ""
+                configs_list = []
+                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
+                real_configs = ""
+                for config in configs:
+                    if config[0]:
+                        real_configs += config[0]+"\n"
+                    elif config[1]:
+                        real_configs += config[1]+"\n"
+                    elif config[2]:
+                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                        if trojan_sni:
+                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                fake_config += config[2]+"\n"
+                                continue
+                        real_configs += config[2]+"\n"
+                configs_list.append(real_configs)
+                try:
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
+                except Exception as e:
+                    pass
+                
+                if urls:
+                    for url in urls:
+                        try:
+                            real_configs = ""
+                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            PANEL_DIR = urlparse(url).path.split('/')
+                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
+                                for config in configs:
+                                    if config[0]:
+                                        real_configs += config[0]+"\n"
+                                    elif config[1]:
+                                        real_configs += config[1]+"\n"
+                                    elif config[2]:
+                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                                        if trojan_sni:
+                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                                continue
+                                        real_configs += config[2]+"\n"
+                                configs_list.append(real_configs)
+                        except Exception as e:
+                            pass
+                if configs_list:
+                    random.shuffle(configs_list)
+                    resp = fake_config + '\n'.join(configs_list)
+            elif randomize_mode == "configs":
+                try:
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
+                except Exception as e:
+                    pass
+                
+                if urls:
+                    resp += "\n"
+                    for url in urls:
+                        try:
+                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            PANEL_DIR = urlparse(url).path.split('/')
+                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
+                                for config in configs:
+                                    if config[0]:
+                                        resp += config[0]+"\n"
+                                    elif config[1]:
+                                        resp += config[1]+"\n"
+                                    elif config[2]:
+                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                                        if trojan_sni:
+                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                                continue
+                                        resp += config[2]+"\n"
+                        except Exception as e:
+                            pass
+                configs = [line for line in resp.split('\n') if line.strip() != '']
+                if len(configs) > 2:
+                    first_configs = configs[0:1]
+                    rest_configs = configs[1:]
+                    random.shuffle(rest_configs)
+                    configs = first_configs + rest_configs
+                resp = '\n'.join(configs)
         else:
             try:
                 with open("nodes.json", 'r') as f:
@@ -373,17 +381,25 @@ class UserView(FlaskView):
         return add_headers(resp, c)
     
     @ route('/hidybot.txt', methods=["GET", "HEAD"])
-    def hidybot_configs(self, base64=False, username=False, randomize=False):
+    def hidybot_configs(self, base64=False):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
-        username = username or request.args.get("username", "").lower() == "true"
-        randomize = randomize or request.args.get("randomize", "").lower() == "true"
-        # limit = limit or request.args.get("limit", "")
-        # if limit:
-        #     try:
-        #         limit = int(limit)
-        #     except Exception as e:
-        #         limit = None
+        bot_configs = None
+        try:
+            with open("hidybotconfigs.json", 'r') as f:
+                bot_configs = json.load(f)
+        except Exception as e:
+            pass
+        if bot_configs:
+            username = bot_configs.get("username", False)
+            randomize = bot_configs.get("randomize", False)
+            randomize_mode = bot_configs.get("randomize_mode", "servers")
+            # limit = limit or request.args.get("limit", "")
+            # if limit:
+            #     try:
+            #         limit = int(limit)
+            #     except Exception as e:
+            #         limit = None
         c = get_common_data(g.user_uuid, mode)
         # response.content_type = 'text/plain';
         urls = None
@@ -399,7 +415,11 @@ class UserView(FlaskView):
                     trojan_sni = re.search(r'sni=([^&]+)', config[2])
                     if trojan_sni:
                         if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                            encoded_name = f"👤:{c['user'].name}"
+                            # if hconfig(ConfigEnum.lang) == 'fa':
+                            #     encoded_name = f" کاربر:{c['user'].name}"
+                            # else:
+                            #     encoded_name = f" 👤:{c['user'].name}"
+                            encoded_name = f" 👤:{c['user'].name}"
                             add_name = config[2] + encoded_name
                             resp = resp.replace(config[2], add_name)
         # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
@@ -411,50 +431,318 @@ class UserView(FlaskView):
         #     # encoded_name = hiddify.url_encode(user_name)
         #     # encoded_name = hiddify.url_encode(f"👤User:{c['user'].name} ")
         #     resp = resp[:match.end()] + encoded_name + resp[match.end():]
-
-        try:
-            with open("nodes.json", 'r') as f:
-                urls = json.load(f)
-        except Exception as e:
-            pass
-        
-        if urls:
-            resp += "\n"
-            for url in urls:
+        if randomize:
+            if randomize_mode == "servers":
+                fake_config = ""
+                configs_list = []
+                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
+                real_configs = ""
+                for config in configs:
+                    if config[0]:
+                        real_configs += config[0]+"\n"
+                    elif config[1]:
+                        real_configs += config[1]+"\n"
+                    elif config[2]:
+                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                        if trojan_sni:
+                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                fake_config += config[2]+"\n"
+                                continue
+                        real_configs += config[2]+"\n"
+                configs_list.append(real_configs)
                 try:
-                    BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                    PANEL_DIR = urlparse(url).path.split('/')
-                    url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
-                    req = requests.get(url_sub,timeout=10)
-                    if req.status_code == 200:
-                        configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                        for config in configs:
-                            if config[0]:
-                                resp += config[0]+"\n"
-                            elif config[1]:
-                                resp += config[1]+"\n"
-                            elif config[2]:
-                                trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                if trojan_sni:
-                                    if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                        continue
-                                resp += config[2]+"\n"
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
                 except Exception as e:
                     pass
-        if randomize:
-            configs = [line for line in resp.split('\n') if line.strip() != '']
-            if len(configs) > 3:
-                first_configs = configs[0:2]
-                rest_configs = configs[2:]
-                random.shuffle(rest_configs)
-                configs = first_configs + rest_configs
-            resp = '\n'.join(configs)
+                
+                if urls:
+                    for url in urls:
+                        try:
+                            real_configs = ""
+                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            PANEL_DIR = urlparse(url).path.split('/')
+                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
+                                for config in configs:
+                                    if config[0]:
+                                        real_configs += config[0]+"\n"
+                                    elif config[1]:
+                                        real_configs += config[1]+"\n"
+                                    elif config[2]:
+                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                                        if trojan_sni:
+                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                                continue
+                                        real_configs += config[2]+"\n"
+                                configs_list.append(real_configs)
+                        except Exception as e:
+                            pass
+                if configs_list:
+                    random.shuffle(configs_list)
+                    resp = fake_config + '\n'.join(configs_list)
+            elif randomize_mode == "configs":
+                try:
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
+                except Exception as e:
+                    pass
+                
+                if urls:
+                    resp += "\n"
+                    for url in urls:
+                        try:
+                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            PANEL_DIR = urlparse(url).path.split('/')
+                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
+                                for config in configs:
+                                    if config[0]:
+                                        resp += config[0]+"\n"
+                                    elif config[1]:
+                                        resp += config[1]+"\n"
+                                    elif config[2]:
+                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                                        if trojan_sni:
+                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                                continue
+                                        resp += config[2]+"\n"
+                        except Exception as e:
+                            pass
+                configs = [line for line in resp.split('\n') if line.strip() != '']
+                if len(configs) > 2:
+                    first_configs = configs[0:1]
+                    rest_configs = configs[1:]
+                    random.shuffle(rest_configs)
+                    configs = first_configs + rest_configs
+                resp = '\n'.join(configs)
+        else:
+            try:
+                with open("nodes.json", 'r') as f:
+                    urls = json.load(f)
+            except Exception as e:
+                pass
+            
+            if urls:
+                resp += "\n"
+                for url in urls:
+                    try:
+                        BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                        PANEL_DIR = urlparse(url).path.split('/')
+                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                        req = requests.get(url_sub,timeout=10)
+                        if req.status_code == 200:
+                            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
+                            for config in configs:
+                                if config[0]:
+                                    resp += config[0]+"\n"
+                                elif config[1]:
+                                    resp += config[1]+"\n"
+                                elif config[2]:
+                                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                                    if trojan_sni:
+                                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                            continue
+                                    resp += config[2]+"\n"
+                    except Exception as e:
+                        pass
         # if limit:
 
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
     
+    @ route('/fragment/', methods=["GET", "HEAD"])
+    def fragment_configs(self):
+        bot_configs = None
+        try:
+            with open("hidybotconfigs.json", 'r') as f:
+                bot_configs = json.load(f)
+        except Exception as e:
+            pass
+        if bot_configs:
+            fragment_configs = bot_configs.get("fragment", None)
+        if fragment_configs:
+            c = get_common_data(g.user_uuid, "new")
+            # response.content_type = 'text/plain';
+            urls = None
+            resp = None
+            if request.method == 'HEAD':
+                resp = ""
+            else:
+                resp = link_maker.make_v2ray_configs(**c)
+                try:
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
+                except Exception as e:
+                    pass
+                if urls:
+                    resp += "\n"
+                    for url in urls:
+                        try:
+                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            PANEL_DIR = urlparse(url).path.split('/')
+                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                resp += req.text + "\n"
+                        except Exception as e:
+                            pass
+
+                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
+                for config in configs:
+                    if config[0]:
+                        if fragment_configs in config[0]:
+                            try:
+                                url = urlparse(config[0])
+                                search_params = parse_qs(url.query)
+                                id = config[0].split('://')[1].split('@')[0]
+                                address = config[0].split('@')[1].split(':')[0]
+                                port = int(config[0].split('@')[1].split(':')[1].split('?')[0])
+
+                                output = {
+                                    "dns": {
+                                        "hosts": {
+                                            "domain:googleapis.cn": "googleapis.com"
+                                        },
+                                        "servers": ["1.1.1.1"]
+                                    },
+                                    "inbounds": [
+                                        {
+                                            "listen": "127.0.0.1",
+                                            "port": 10808,
+                                            "protocol": "socks",
+                                            "settings": {
+                                                "auth": "noauth",
+                                                "udp": True,
+                                                "userLevel": 8
+                                            },
+                                            "sniffing": {
+                                                "destOverride": ["http", "tls"],
+                                                "enabled": True
+                                            },
+                                            "tag": "socks"
+                                        },
+                                        {
+                                            "listen": "127.0.0.1",
+                                            "port": 10809,
+                                            "protocol": "http",
+                                            "settings": {
+                                                "userLevel": 8
+                                            },
+                                            "tag": "http"
+                                        }
+                                    ],
+                                    "log": {
+                                        "loglevel": "warning"
+                                    },
+                                    "outbounds": [
+                                        {
+                                            "mux": {
+                                                "concurrency": 8,
+                                                "enabled": False
+                                            },
+                                            "protocol": "vless",
+                                            "settings": {
+                                                "vnext": [
+                                                    {
+                                                        "address": address,
+                                                        "port": port,
+                                                        "users": [
+                                                            {
+                                                                "encryption": search_params.get("encryption")[0],
+                                                                "flow": "",
+                                                                "id": id,
+                                                                "level": 8,
+                                                                "security": "auto"
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            "streamSettings": {
+                                                "network": search_params.get("type")[0],
+                                                "security": search_params.get("security")[0],
+                                                "tlsSettings": {
+                                                    "allowInsecure": False,
+                                                    "alpn": [search_params.get("alpn")[0]],
+                                                    "fingerprint": search_params.get("fp")[0],
+                                                    "publicKey": "",
+                                                    "serverName": search_params.get("sni")[0],
+                                                    "shortId": "",
+                                                    "show": False,
+                                                    "spiderX": ""
+                                                },
+                                                "wsSettings": {
+                                                    "headers": {
+                                                        "Host": search_params.get("host")[0]
+                                                    },
+                                                    "path": search_params.get("path")[0]
+                                                }
+                                            },
+                                            "proxySettings": {
+                                                "tag": "fragment",
+                                                "transportLayer": True
+                                            },
+                                            "tag": "proxy"
+                                        },
+                                        {
+                                            "protocol": "freedom",
+                                            "settings": {},
+                                            "tag": "direct"
+                                        },
+                                        {
+                                            "protocol": "freedom",
+                                            "tag": "fragment",
+                                            "domainStrategy": "UseIP",
+                                            "sniffing": {
+                                                "enabled": True,
+                                                "destOverride": ["http", "tls"]
+                                            },
+                                            "settings": {
+                                                "fragment": {
+                                                    "packets": "tlshello",
+                                                    "length": "100-200",
+                                                    "interval": "10-20"
+                                                }
+                                            },
+                                            "streamSettings": {
+                                                "sockopt": {
+                                                    "tcpNoDelay": True,
+                                                    "domainStrategy": "UseIP"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "protocol": "blackhole",
+                                            "settings": {
+                                                "response": {
+                                                    "type": "http"
+                                                }
+                                            },
+                                            "tag": "block"
+                                        }
+                                    ],
+                                    "routing": {
+                                        "domainStrategy": "IPIfNonMatch",
+                                        "rules": [
+                                            {
+                                                "ip": ["1.1.1.1"],
+                                                "outboundTag": "proxy",
+                                                "port": "53",
+                                                "type": "field"
+                                            }
+                                        ]
+                                    }
+                                }
+                                resp = json.dumps(output)
+                                return add_headers(resp, c)
+                            except Exception as e:
+                                return jsonify({'status': 502, 'msg': 'error:\n{e}'})
     
     # @ route('/autohidybot/', methods=["GET", "HEAD"])
     # def auto_hidybot_configs(self,url="https://user2.fly4net.click/eqQGE0A6hcP/0f4e5b2e-fffb-4509-87c9-e7a57d8b5445/all.txt",appname="v2rayng"):

@@ -15,6 +15,7 @@ def init_app(app):
     api.add_resource(UserResource, "/user/")
     api.add_resource(bulkUsers, "/bulkusers/")
     api.add_resource(Sub, "/sub/")
+    api.add_resource(hidybot_configs, "/configs/")
     api.add_resource(AdminUserResource, "/admin/")
 
     # with app.app_context():
