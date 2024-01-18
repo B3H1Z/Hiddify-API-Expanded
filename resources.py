@@ -96,6 +96,23 @@ class Sub(Resource):
                 return jsonify({'status': 200, 'msg': 'Nodes was saved successfully'})
         except Exception as e:
             return jsonify({'status': 502, 'msg': 'Nodes File not created\n{e}'})
+        
+class hidybot_configs(Resource):
+    decorators = [hiddify.super_admin]
+
+    def get(self):
+        return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
+
+    def post(self):
+        configs = request.json
+        if not configs:
+            abort(502, "Configs is empty")
+        try:
+            with open("hidybotconfigs.json", 'w') as f:
+                json.dump(configs, f)
+                return jsonify({'status': 200, 'msg': 'configs was saved successfully'})
+        except Exception as e:
+            return jsonify({'status': 502, 'msg': 'configs File not created\n{e}'})
 
 
 class AdminUserResource(Resource):
