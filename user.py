@@ -279,7 +279,7 @@ class UserView(FlaskView):
                         BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                         PANEL_DIR = urlparse(url).path.split('/')
                         url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
-                        req = requests.get(url_sub,timeout=5)
+                        req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
                             for config in configs:
@@ -313,7 +313,7 @@ class UserView(FlaskView):
                         BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                         PANEL_DIR = urlparse(url).path.split('/')
                         url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
-                        req = requests.get(url_sub,timeout=5)
+                        req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
                             for config in configs:
@@ -350,7 +350,7 @@ class UserView(FlaskView):
                         BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                         PANEL_DIR = urlparse(url).path.split('/')
                         url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
-                        req = requests.get(url_sub,timeout=5)
+                        req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
                             for config in configs:
@@ -425,7 +425,7 @@ class UserView(FlaskView):
                     BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                     PANEL_DIR = urlparse(url).path.split('/')
                     url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
-                    req = requests.get(url_sub,timeout=5)
+                    req = requests.get(url_sub,timeout=10)
                     if req.status_code == 200:
                         configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
                         for config in configs:
