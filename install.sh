@@ -13,6 +13,7 @@ RESET='\033[0m' # Reset text color
 HIDY_BOT_ID="@HidyBotGroup"
 api_location="hiddifypanel/panel/commercial/restapi"
 user_location="hiddifypanel/panel/user"
+script_location="/usr/local/bin/hiddify-api-expanded"
 
 # Function to display error messages and exit
 function display_error_and_exit() {
@@ -53,7 +54,6 @@ if command -v pip3 &> /dev/null; then
         display_error_and_exit "HiddifyPanel is not installed. Please install HiddifyPanel and try again."
     fi
     pip_location_1="$pip_location/$api_location"
-    script_location="/usr/local/bin/hiddify-api-expanded"
     if [ -f "$script_location" ]; then
         echo "Removing old script"
         rm -rf "$script_location"
@@ -77,9 +77,9 @@ if command -v pip3 &> /dev/null; then
 
     echo "Adding .lock files"
     touch "$pip_location_1/expanded.lock"
-    echo "loc location: $pip_location_1/expanded.lock"
+    echo "lock location: $pip_location_1/expanded.lock"
     touch "$pip_location/$user_location/expanded.lock"
-    echo "loc location: $pip_location/$user_location/expanded.lock"
+    echo "lock location: $pip_location/$user_location/expanded.lock"
 
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel

@@ -13,6 +13,7 @@ def install_or_update():
             return False
         print(output)
         print("Installed")
+        return True
     except Exception as e:
         print(e)
         print("Failed to install")
