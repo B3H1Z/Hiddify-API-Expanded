@@ -62,13 +62,13 @@ class UserResource(Resource):
 class bulkUsers(Resource):
     decorators = [hiddify.super_admin]
 
-    # def get(self):
-    #    uuid_list  = request.json
-    #    users = User.query.filter(User.uuid.in_(uuid_list)).all()
-    #    return jsonify([user.to_dict() for user in users])
-
     def get(self):
-        return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
+       uuid_list  = request.json
+       users = User.query.filter(User.uuid.in_(uuid_list)).all()
+       return jsonify([user.to_dict() for user in users])
+
+    # def get(self):
+    #     return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
         
     def post(self):
         users = request.json
