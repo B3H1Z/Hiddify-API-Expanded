@@ -1,4 +1,4 @@
-
+# Description: Hiddify API Expanded Edition
 from flask import abort, redirect, render_template, request, Response, g, url_for, jsonify, flash
 from wtforms.validators import Regexp, ValidationError
 import urllib

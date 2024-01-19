@@ -1,3 +1,4 @@
+# Description: Hiddify API Expanded Edition
 from flask import Blueprint
 from flask_restful import Api
 from .tgbot import bot, register_bot, TGBotResource

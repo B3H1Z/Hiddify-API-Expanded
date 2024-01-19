@@ -75,11 +75,6 @@ if command -v pip3 &> /dev/null; then
     chmod +x "$script_location/update.py"
     cp /opt/Hiddify-API-Expanded/version.json "$script_location/version.json"
 
-    echo "Adding .lock files"
-    touch "$pip_location_1/expanded.lock"
-    echo "lock location: $pip_location_1/expanded.lock"
-    touch "$pip_location/$user_location/expanded.lock"
-    echo "lock location: $pip_location/$user_location/expanded.lock"
 
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel
