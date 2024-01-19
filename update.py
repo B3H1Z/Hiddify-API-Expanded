@@ -181,10 +181,7 @@ github_version = github_version_file["version"]
 github_version_status = github_version_file["public"]
 github_max_panel_allowed_version = github_version_file["max_panel_allowed_version"]
 
-if github_version == current_version:
-    print("You are up to date")
-    exit()
-else:
+if is_version_less(current_version, github_version):
     print("Update available")
     print(f"Current version: {current_version}")
     print(f"Latest version: {github_version}")
@@ -198,4 +195,7 @@ else:
     else:
         print("This is a beta release")
         exit()
+    exit()
+else:
+    print("You have the latest version")
     exit()
