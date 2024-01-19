@@ -77,7 +77,9 @@ if command -v pip3 &> /dev/null; then
 
     echo "Adding .lock files"
     touch "$pip_location_1/expanded.lock"
+    echo "loc location: $pip_location_1/expanded.lock"
     touch "$pip_location/$user_location/expanded.lock"
+    echo "loc location: $pip_location/$user_location/expanded.lock"
 
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel
