@@ -4,6 +4,11 @@ import json
 import os
 
 
+sign_message = "# Description: Hiddify API Expanded Edition".lower()
+api_location = "hiddifypanel/panel/commercial/restapi"
+user_location = "hiddifypanel/panel/user"
+json_version_file_path = "/usr/local/bin/hiddify-api-expanded/version.json"
+
 def is_version_less(version1, version2):
     v1_parts = list(map(int, version1.split('.')))
     v2_parts = list(map(int, version2.split('.')))
@@ -95,14 +100,33 @@ def get_github_version_file():
         print("Failed to check for updates")
         return False
     return check_version
-        
-sign_message = "# Description: Hiddify API Expanded Edition".lower()
-api_location = "hiddifypanel/panel/commercial/restapi"
-user_location = "hiddifypanel/panel/user"
-json_version_file_path = "/usr/local/bin/hiddify-api-expanded/version.json"
+
+def json_version_file():
+    try:
+        with open(json_version_file_path, "r") as json_version_file:
+            json_version_file = json_version_file.read()
+    except Exception as e:
+        print(e)
+        print("Failed to read version.json")
+        return False
+
+    try:
+        json_version_file = json.loads(json_version_file)
+    except Exception as e:
+        print(e)
+        print("version.json is corrupted")
+        return False
+
+    if "version" not in json_version_file:
+        print("version.json is corrupted")
+        return False   
+    return json_version_file
+
+
 
 pip_location = get_pip_location()
 github_version_file = get_github_version_file()
+json_version_dict = json_version_file()
 hiddify_panel_version = get_hiddify_panel_version()
 compare_version = is_version_less(hiddify_panel_version, github_version_file["max_panel_allowed_version"])
 
@@ -114,7 +138,9 @@ edited_files = [
 
 print(f"Current hiddify panel version: {hiddify_panel_version}")
 print(f"Max hiddify panel allowed version: {github_version_file['max_panel_allowed_version']}")
-print(f"Compare version: {compare_version}")
+print(f"Allowed to update: {compare_version}")
+print(f"Api expanded github version: {github_version_file['version']}")
+print(f"Api expanded installed version: {json_version_dict['version']}")
 
 if not compare_version:
     print("Not allowed to Install or Update")
@@ -145,29 +171,7 @@ if need_install:
     print("Installed")
     exit()
 
-
-
-try:
-    with open(json_version_file_path, "r") as json_version_file:
-        json_version_file = json_version_file.read()
-except Exception as e:
-    print(e)
-    print("Failed to read version.json")
-    exit()
-
-try:
-    json_version_file = json.loads(json_version_file)
-except Exception as e:
-    print(e)
-    print("version.json is corrupted")
-    exit()
-
-if "version" not in json_version_file:
-    print("version.json is corrupted")
-    exit()
-
-current_version = json_version_file["version"]
-
+current_version = json_version_dict["version"]
 
 if not github_version_file:
     print("Failed to check for updates")
