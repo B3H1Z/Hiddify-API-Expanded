@@ -53,6 +53,16 @@ if command -v pip3 &> /dev/null; then
         display_error_and_exit "HiddifyPanel is not installed. Please install HiddifyPanel and try again."
     fi
     pip_location_1="$pip_location/$api_location"
+    script_location="/usr/local/bin/hiddify-api-expanded"
+    if [ -f "$script_location" ]; then
+        echo "Removing old script"
+        rm -rf "$script_location"
+    fi
+    # if folder not exist
+    if [ ! -d "$script_location" ]; then
+        echo "Creating folder"
+        mkdir -p "$script_location"
+    fi
     echo "HiddifyPanel version: $version"
     echo "HiddifyPanel location: $pip_location_1"
 
@@ -60,12 +70,21 @@ if command -v pip3 &> /dev/null; then
     cp /opt/Hiddify-API-Expanded/__init__.py "$pip_location_1/__init__.py"
     cp /opt/Hiddify-API-Expanded/resources.py "$pip_location_1/resources.py"
     cp /opt/Hiddify-API-Expanded/user.py "$pip_location/$user_location/user.py"
+    cp /opt/Hiddify-API-Expanded/update.py "$script_location/update.py"
+
+    chmod +x "$script_location/hiddify-api-expanded.py"
+    cp /opt/Hiddify-API-Expanded/version.json "$script_location/version.json"
+
+    echo "Adding .lock files"
+    touch "$pip_location_1/expanded.lock"
+    touch "$$pip_location/$user_location/expanded.lock"
+
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel
     #remove cache
     cd /opt
     rm -rf /opt/Hiddify-API-Expanded
-    echo -e "${GREEN}Done${RESET}"
+    echo -e "${GREEN}Hiddify API Expanded successfully installed.${RESET}"
     
     
 else
