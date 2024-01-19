@@ -54,7 +54,6 @@ def get_hiddify_panel_version():
         if not hiddify_panel_version:
             print("Failed to get hiddify panel version")
             return False
-        print(f"hiddify panel version: {hiddify_panel_version}")
         return hiddify_panel_version
     except Exception as e:
         print(e)
