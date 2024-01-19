@@ -209,6 +209,9 @@ class UserView(FlaskView):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
         bot_configs = None
+        username = False
+        randomize = False
+        randomize_mode = "servers"
         try:
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
@@ -385,6 +388,9 @@ class UserView(FlaskView):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
         bot_configs = None
+        username = False
+        randomize = False
+        randomize_mode = "servers"
         try:
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
