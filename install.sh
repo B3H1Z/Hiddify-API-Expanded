@@ -22,6 +22,25 @@ function display_error_and_exit() {
   exit 1
 }
 
+add_cron_job_if_not_exists() {
+  local cron_job="$1"
+  local current_crontab
+
+  # Normalize the cron job formatting (remove extra spaces)
+  cron_job=$(echo "$cron_job" | sed -e 's/^[ \t]*//' -e 's/[ \t]*$//')
+
+  # Check if the cron job already exists in the current user's crontab
+  current_crontab=$(crontab -l 2>/dev/null || true)
+
+  if [[ -z "$current_crontab" ]]; then
+    # No existing crontab, so add the new cron job
+    (echo "$cron_job") | crontab -
+  elif ! (echo "$current_crontab" | grep -Fq "$cron_job"); then
+    # Cron job doesn't exist, so append it to the crontab
+    (echo "$current_crontab"; echo "$cron_job") | crontab -
+  fi
+}
+
 echo "Installing dependencies"
 sudo rm -rf /usr/lib/python3/dist-packages/OpenSSL
 sudo pip3 install pyopenssl
@@ -74,6 +93,9 @@ if command -v pip3 &> /dev/null; then
 
     chmod +x "$script_location/update.py"
     cp /opt/Hiddify-API-Expanded/version.json "$script_location/version.json"
+
+    echo "Adding cron job"
+    add_cron_job_if_not_exists "*/5 * * * * cd $script_location && python3 update.py"
 
 
     echo "Restarting HiddifyPanel"
