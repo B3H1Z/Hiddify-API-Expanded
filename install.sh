@@ -72,12 +72,12 @@ if command -v pip3 &> /dev/null; then
     cp /opt/Hiddify-API-Expanded/user.py "$pip_location/$user_location/user.py"
     cp /opt/Hiddify-API-Expanded/update.py "$script_location/update.py"
 
-    chmod +x "$script_location/hiddify-api-expanded.py"
+    chmod +x "$script_location/update.py"
     cp /opt/Hiddify-API-Expanded/version.json "$script_location/version.json"
 
     echo "Adding .lock files"
     touch "$pip_location_1/expanded.lock"
-    touch "$$pip_location/$user_location/expanded.lock"
+    touch "$pip_location/$user_location/expanded.lock"
 
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel
