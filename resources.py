@@ -62,19 +62,19 @@ class UserResource(Resource):
 class bulkUsers(Resource):
     decorators = [hiddify.super_admin]
 
-    #def get(self):
-    #    uuid_list  = request.json
-    #    users = User.query.filter(User.uuid.in_(uuid_list)).all()
-    #    return jsonify([user.to_dict() for user in users])
-
     def get(self):
-        return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
+       uuid_list  = request.json
+       users = User.query.filter(User.uuid.in_(uuid_list)).all()
+       return jsonify([user.to_dict() for user in users])
+
+    # def get(self):
+    #     return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
         
     def post(self):
         users = request.json
         hiddify.bulk_register_users(users)
         for newuser in users:
-            user = user_by_uuid(newuser['uuid']) or abort(502, "unknown issue! user is not added")
+            user = user_by_uuid(newuser['uuid']) or abort(202, f"cant find user{newuser['uuid']}")
             user_driver.add_client(user)
         hiddify.quick_apply_users()
 
