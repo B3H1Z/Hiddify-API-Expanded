@@ -76,6 +76,7 @@ class bulkUsers(Resource):
         if update:
             hiddify.bulk_update_users(users)
             hiddify.quick_apply_users()
+            return jsonify({'status': 200, 'msg': 'All users  updated by new method successfully'})
         else:
             hiddify.bulk_register_users(users)
             for newuser in users:
@@ -83,7 +84,7 @@ class bulkUsers(Resource):
                 user_driver.add_client(user)
             hiddify.quick_apply_users()
 
-        return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
+            return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
     
     
 class Sub(Resource):
