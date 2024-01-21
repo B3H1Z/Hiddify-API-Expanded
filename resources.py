@@ -74,9 +74,12 @@ class bulkUsers(Resource):
         update = request.args.get('update') or False
         users = request.json
         if update:
-            hiddify.bulk_update_users(users)
-            hiddify.quick_apply_users()
-            return jsonify({'status': 200, 'msg': 'All users  updated by new method successfully'})
+            try:
+                bulk_update_users(users)
+                hiddify.quick_apply_users()
+                return jsonify({'status': 200, 'msg': 'All users  updated by new method successfully'})
+            except Exception as e:
+                return jsonify({'status': 250, 'msg': f"error{e}"})
         else:
             hiddify.bulk_register_users(users)
             for newuser in users:
@@ -86,6 +89,7 @@ class bulkUsers(Resource):
 
             return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
     
+
     
 class Sub(Resource):
     decorators = [hiddify.super_admin]
@@ -192,3 +196,25 @@ class HelloResource(Resource):
 # class UpdateUsageResource(Resource):
 #     def get(self):
 #         return jsonify({"status": 200, "msg": "ok"})
+
+def bulk_update_users(users=[]):
+    for u in users:
+        bot_update_user(**u)
+    db.session.commit()
+
+def bot_update_user(**user):
+    # if not is_valid():return
+    dbuser = User.query.filter_by(uuid=user['uuid']).first()
+    if 'package_days' in user:
+        dbuser.package_days = user['package_days']
+        if user.get('start_date', ''):
+            dbuser.start_date = hiddify.json_to_date(user['start_date'])
+        else:
+            dbuser.start_date = None
+    dbuser.current_usage_GB = user['current_usage_GB']
+    dbuser.last_online = hiddify.json_to_time(user.get('last_online')) or datetime.datetime.min
+
+def bulk_delete_users(users=[], commit=True):
+    for u in users:
+       user = user_by_uuid(u['uuid'])
+       user.remove(user)
