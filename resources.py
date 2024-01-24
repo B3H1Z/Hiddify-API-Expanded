@@ -55,7 +55,8 @@ class UserResource(Resource):
         data = request.json
         uuid = data.get('uuid') or abort(422, "Parameter issue: 'uuid'")
         user = user_by_uuid(uuid) or abort(404, "user not found")
-        user.remove()
+        db.session.delete(user)
+        db.session.commit()
         hiddify.quick_apply_users()
         return jsonify({'status': 200, 'msg': 'ok'})
 
@@ -88,6 +89,15 @@ class bulkUsers(Resource):
             hiddify.quick_apply_users()
 
             return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
+    
+    def delete(self):
+        try:
+            users = request.json
+            bulk_delete_users(users)
+            hiddify.quick_apply_users()
+            return jsonify({'status': 200, 'msg': 'All users  deleted successfully'})
+        except Exception as e:
+                return jsonify({'status': 250, 'msg': f"error{e}"})
     
 
     
@@ -216,5 +226,7 @@ def bot_update_user(**user):
 
 def bulk_delete_users(users=[], commit=True):
     for u in users:
-       user = user_by_uuid(u['uuid'])
-       user.remove(user)
+        user = user_by_uuid(u['uuid'])
+        db.session.delete(user)
+        user_driver.remove_client(user)
+    db.session.commit()
