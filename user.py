@@ -289,7 +289,7 @@ class UserView(FlaskView):
                             real_configs = ""
                             BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -323,7 +323,7 @@ class UserView(FlaskView):
                         try:
                             BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -360,7 +360,7 @@ class UserView(FlaskView):
                     try:
                         BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                         PANEL_DIR = urlparse(url).path.split('/')
-                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -379,6 +379,26 @@ class UserView(FlaskView):
                         pass
         # if limit:
 
+        if base64:
+            resp = do_base_64(resp)
+        return add_headers(resp, c)
+    
+    @ route('/all2.txt', methods=["GET", "HEAD"])
+    def all_configs2(self, base64=False):
+        mode = "new"  # request.args.get("mode")
+        base64 = base64 or request.args.get("base64", "").lower() == "true"
+        c = get_common_data(g.user_uuid, mode)
+        # response.content_type = 'text/plain';
+        if request.method == 'HEAD':
+            resp = ""
+        else:
+            resp = link_maker.make_v2ray_configs(**c)  # render_template('all_configs.txt', **c, base64=do_base_64)
+
+        # res = ""
+        # for line in resp.split("\n"):
+        #     if "vmess://" in line:
+        #         line = "vmess://"+do_base_64(line.replace("vmess://", ""))
+        #     res += line+"\n"
         if base64:
             resp = do_base_64(resp)
         return add_headers(resp, c)
@@ -468,7 +488,7 @@ class UserView(FlaskView):
                             real_configs = ""
                             BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -502,7 +522,7 @@ class UserView(FlaskView):
                         try:
                             BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -539,7 +559,7 @@ class UserView(FlaskView):
                     try:
                         BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                         PANEL_DIR = urlparse(url).path.split('/')
-                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
