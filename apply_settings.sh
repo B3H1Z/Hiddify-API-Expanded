@@ -12,12 +12,11 @@ if [ -f "$update_usage_cron_path" ]; then
     echo "Cron job exists"
     cron_job=$(cat "$update_usage_cron_path")
     echo "Current Content: $cron_job"
-    # Replace cron job
-    echo "Replacing cron job"
-    sudo chattr -f -i /etc/cron.d/hiddify_usage_update
-    echo "$update_usage_cron_target_time $update_usage_cron_user $update_usage_cron_command" > "$update_usage_cron_path"
-    sudo chattr +i /etc/cron.d/hiddify_usage_update
-    
+    # Clear content of file and add new cron job
+    echo "Clearing content of file"
+    echo "" > "$update_usage_cron_path"
+    echo "Adding new cron job"
+    echo "$update_usage_cron_target_time $update_usage_cron_user $update_usage_cron_command" >> "$update_usage_cron_path"
     # Check if cron job replaced
     cron_job=$(cat "$update_usage_cron_path")
     echo "New Content: $cron_job"
