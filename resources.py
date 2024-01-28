@@ -55,31 +55,54 @@ class UserResource(Resource):
         data = request.json
         uuid = data.get('uuid') or abort(422, "Parameter issue: 'uuid'")
         user = user_by_uuid(uuid) or abort(404, "user not found")
-        user.remove()
+        db.session.delete(user)
+        db.session.commit()
         hiddify.quick_apply_users()
         return jsonify({'status': 200, 'msg': 'ok'})
 
 class bulkUsers(Resource):
     decorators = [hiddify.super_admin]
 
-    #def get(self):
-    #    uuid_list  = request.json
-    #    users = User.query.filter(User.uuid.in_(uuid_list)).all()
-    #    return jsonify([user.to_dict() for user in users])
-
     def get(self):
-        return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
+        try:
+            uuid_list  = request.json
+            users = User.query.filter(User.uuid.in_(uuid_list)).all()
+            return jsonify([user.to_dict() for user in users])
+        except Exception as e:
+            return jsonify({'status': 250, 'msg': f"error{e}"})
+
+    # def get(self):
+    #     return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
         
     def post(self):
+        update = request.args.get('update') or False
         users = request.json
-        hiddify.bulk_register_users(users)
-        for newuser in users:
-            user = user_by_uuid(newuser['uuid']) or abort(502, "unknown issue! user is not added")
-            user_driver.add_client(user)
-        hiddify.quick_apply_users()
+        if update:
+            try:
+                bulk_update_users(users)
+                hiddify.quick_apply_users()
+                return jsonify({'status': 200, 'msg': 'All users  updated by new method successfully'})
+            except Exception as e:
+                return jsonify({'status': 250, 'msg': f"error{e}"})
+        else:
+            hiddify.bulk_register_users(users)
+            for newuser in users:
+                user = user_by_uuid(newuser['uuid']) or abort(202, f"cant find user{newuser['uuid']}")
+                user_driver.add_client(user)
+            hiddify.quick_apply_users()
 
-        return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
+            return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
     
+    def delete(self):
+        try:
+            users = request.json
+            bulk_delete_users(users)
+            hiddify.quick_apply_users()
+            return jsonify({'status': 200, 'msg': 'All users  deleted successfully'})
+        except Exception as e:
+                return jsonify({'status': 250, 'msg': f"error{e}"})
+    
+
     
 class Sub(Resource):
     decorators = [hiddify.super_admin]
@@ -186,3 +209,27 @@ class HelloResource(Resource):
 # class UpdateUsageResource(Resource):
 #     def get(self):
 #         return jsonify({"status": 200, "msg": "ok"})
+
+def bulk_update_users(users=[]):
+    for u in users:
+        bot_update_user(**u)
+    db.session.commit()
+
+def bot_update_user(**user):
+    # if not is_valid():return
+    dbuser = User.query.filter_by(uuid=user['uuid']).first()
+    if 'package_days' in user:
+        dbuser.package_days = user['package_days']
+        if user.get('start_date', ''):
+            dbuser.start_date = hiddify.json_to_date(user['start_date'])
+        else:
+            dbuser.start_date = None
+    dbuser.current_usage_GB = user['current_usage_GB']
+    dbuser.last_online = hiddify.json_to_time(user.get('last_online')) or datetime.datetime.min
+
+def bulk_delete_users(users=[], commit=True):
+    for u in users:
+        user = user_by_uuid(u['uuid'])
+        db.session.delete(user)
+        user_driver.remove_client(user)
+    db.session.commit()
