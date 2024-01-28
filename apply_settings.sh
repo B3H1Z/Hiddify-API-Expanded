@@ -18,7 +18,7 @@ if [ -f "$update_usage_cron_path" ]; then
     cron_job=$(cat "$update_usage_cron_path")
     echo "New Content: $cron_job"
     echo "Restarting cron service"
-    sudo chattr -f -i /etc/cron.d/hiddify_usage_update"
+    sudo chattr -f -i /etc/cron.d/hiddify_usage_update
     echo "Cron job successfully replaced"
 
 else
