@@ -13,7 +13,11 @@ if [ -f "$update_usage_cron_path" ]; then
     cron_job=$(cat "$update_usage_cron_path")
     echo "Current Content: $cron_job"
     # Replace cron job
-    sed -i "s|$cron_job|$update_usage_cron_target_time $update_usage_cron_user $update_usage_cron_command|g" "$update_usage_cron_path"
+    echo "Replacing cron job"
+    sudo chattr -f -i /etc/cron.d/hiddify_usage_update
+    echo "$update_usage_cron_target_time $update_usage_cron_user $update_usage_cron_command" > "$update_usage_cron_path"
+    sudo chattr +i /etc/cron.d/hiddify_usage_update
+    
     # Check if cron job replaced
     cron_job=$(cat "$update_usage_cron_path")
     echo "New Content: $cron_job"
