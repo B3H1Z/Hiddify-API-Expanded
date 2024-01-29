@@ -218,12 +218,8 @@ def bulk_update_users(users=[]):
 def bot_update_user(**user):
     # if not is_valid():return
     dbuser = User.query.filter_by(uuid=user['uuid']).first()
-    if 'package_days' in user:
-        dbuser.package_days = user['package_days']
-        if user.get('start_date', ''):
-            dbuser.start_date = hiddify.json_to_date(user['start_date'])
-        else:
-            dbuser.start_date = None
+    if user.get('start_date', ''):
+        dbuser.start_date = hiddify.json_to_date(user['start_date'])
     dbuser.current_usage_GB = user['current_usage_GB']
     dbuser.last_online = hiddify.json_to_time(user.get('last_online')) or datetime.datetime.min
 
