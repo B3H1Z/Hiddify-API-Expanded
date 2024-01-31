@@ -1,6 +1,10 @@
 # Description: Hiddify API Expanded Edition
 import json
+import os
 import re
+import subprocess
+import time
+import subprocess
 from urllib.parse import urlparse
 from flask import abort, jsonify, request
 from flask_restful import Resource
@@ -139,6 +143,66 @@ class hidybot_configs(Resource):
             return jsonify({'status': 502, 'msg': 'configs File not created\n{e}'})
 
 
+
+class UpdateUsage(Resource):
+    decorators = [hiddify.super_admin]        
+    def get(self):
+        try:
+            log_dir = '/opt/hiddify-config/log'
+            lock_file_path = os.path.join(log_dir, 'update_usage.lock')
+
+            if os.path.isfile(lock_file_path) and (time.time() - os.path.getmtime(lock_file_path)) < 300:
+                return jsonify({'status': 500, 'msg': 'Another usage update is running... Please wait until it finishes or wait 5 minutes or execute \'rm -f {}\''.format(lock_file_path)})
+
+            with open(lock_file_path, 'w') as lock_file:
+                lock_file.write(str(int(time.time())))
+
+            result = None
+
+            try:
+                subprocess.run(['pgrep', '-f', 'update-usage'], check=True)
+            except subprocess.CalledProcessError:
+                try:
+                    result = subprocess.run(["python3", "-m", "hiddifypanel", "update-usage"], capture_output=True, text=True, check=True)
+                except Exception as e:
+                    return jsonify({'status': 502, 'msg': f'error\n{e}','code':str(e.__traceback__.tb_lineno)})
+
+            os.remove(lock_file_path)
+
+            if not result:
+                return jsonify({'status': 502, 'msg': 'error\nresult is None','code':str(e.__traceback__.tb_lineno)})
+
+            # if result.stderr:
+            #     return jsonify({'status': 502, 'msg': f'error\n{result.stderr}','code':str(e.__traceback__.tb_lineno)})
+
+            if result.stdout:
+                return jsonify({'status': 200, 'msg': 'ok', 'output': result.stdout})
+            else:
+                return jsonify({'status': 502, 'msg': 'error\nresult.stdout is None','code':str(e.__traceback__.tb_lineno)})
+        except Exception as e:
+            return jsonify({'status': 502, 'msg': f'error\n{e}','code':str(e.__traceback__.tb_lineno)})
+
+class Status(Resource):
+    decorators = [hiddify.super_admin]
+    
+    def get(self):
+        config_file = '/usr/local/bin/hiddify-api-expanded/version.json'
+        cron_file = '/etc/cron.d/hiddify_usage_update'
+        try:
+            if os.path.isfile(config_file):
+                with open(config_file, 'r') as f:
+                    version = json.load(f)
+                with open(cron_file, 'r') as f:
+                    cron = f.read()
+                cron = re.sub(r'\s+', ' ', cron).strip()
+                if cron == '':
+                    cron = False
+                return jsonify({'status': 200, 'msg': 'ok', 'data': {'version': version, 'cron': cron}})
+            else:
+                return jsonify({'status': 502, 'msg': 'error\nversion file not found'})
+        except Exception as e:
+            return jsonify({'status': 502, 'msg': f'error\n{e}','code':str(e.__traceback__.tb_lineno)})
+        
 class AdminUserResource(Resource):
     decorators = [hiddify.super_admin]
 
