@@ -18,6 +18,8 @@ def init_app(app):
     api.add_resource(Sub, "/sub/")
     api.add_resource(hidybot_configs, "/configs/")
     api.add_resource(AdminUserResource, "/admin/")
+    api.add_resource(UpdateUsage, "/update_usage/")
+    api.add_resource(Status, "/status/")
 
     # with app.app_context():
     #     register_bot()
