@@ -732,8 +732,8 @@ class UserView(FlaskView):
                                             "settings": {
                                                 "fragment": {
                                                     "packets": "tlshello",
-                                                    "length": "100-200",
-                                                    "interval": "10-20"
+                                                    "length": "5-10",
+                                                    "interval": "1-5"
                                                 }
                                             },
                                             "streamSettings": {
