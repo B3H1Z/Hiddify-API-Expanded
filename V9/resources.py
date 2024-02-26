@@ -1,38 +1,32 @@
-# Description: Hiddify API Expanded Edition
 import json
 import os
 import re
-import subprocess
 import time
 import subprocess
 from urllib.parse import urlparse
-from flask import abort, jsonify, request
+from flask import jsonify, request
+from apiflask import abort
 from flask_restful import Resource
 # from flask_simplelogin import login_required
 import datetime
 from hiddifypanel.models import *
-from urllib.parse import urlparse
+from hiddifypanel.auth import login_required
 from hiddifypanel.panel import hiddify
 from hiddifypanel.drivers import user_driver
-from hiddifypanel.models import User
 from hiddifypanel.panel.database import db
 
 
-
-
 class UserResource(Resource):
-    decorators = [hiddify.super_admin]
+    decorators = [login_required({Role.super_admin})]
 
     def get(self):
-        uuid = request.args.get('uuid') 
+        uuid = request.args.get('uuid')
         actoin = request.args.get('action')
         if uuid and not actoin:
-            user = user_by_uuid(uuid) or abort(404, "user not found")
-            
+            user = User.by_uuid(uuid) or abort(404, "user not found")
             return jsonify(user.to_dict())
-
         if uuid and actoin == 'delete':
-            user = user_by_uuid(uuid) or abort(404, "user not found")
+            user = User.by_uuid(uuid) or abort(404, "user not found")
             try:
                 db.session.delete(user)
                 db.session.commit()
@@ -44,29 +38,43 @@ class UserResource(Resource):
             except Exception as e:
                 return jsonify({'status': 502, 'msg': 'user not deleted','error':str(e),'line':str(e.__traceback__.tb_lineno)})
         users = User.query.all() or abort(502, "WTF!")
-        return jsonify([user.to_dict() for user in users])
+        return jsonify([user.to_dict() for user in users])  # type: ignore
 
     def post(self):
         data = request.json
         uuid = data.get('uuid') or abort(422, "Parameter issue: 'uuid'")
-        hiddify.add_or_update_user(**data)
-        user = user_by_uuid(uuid) or abort(502, "unknown issue! user is not added")
+        User.add_or_update(**data)  # type: ignore
+        user = User.by_uuid(uuid) or abort(502, "unknown issue! user is not added")
         user_driver.add_client(user)
         hiddify.quick_apply_users()
         return jsonify({'status': 200, 'msg': 'ok'})
 
     def delete(self):
-        # uuid = request.args.get('uuid') or abort(422, "Parameter issue: 'uuid'")
-        data = request.json
-        uuid = data.get('uuid') or abort(422, "Parameter issue: 'uuid'")
-        user = user_by_uuid(uuid) or abort(404, "user not found")
-        db.session.delete(user)
-        db.session.commit()
+        uuid = request.args.get('uuid') or abort(422, "Parameter issue: 'uuid'")
+        user = User.by_uuid(uuid) or abort(404, "user not found")
+        user.remove()
         hiddify.quick_apply_users()
         return jsonify({'status': 200, 'msg': 'ok'})
 
+        # start aliz dev
+    # desc : it is better to have a delete method to manage users more programatically :)
+    def delete(self, uuid=None):
+        uuid = request.args['uuid'] if 'uuid' in request.args else None
+        if uuid:
+            user = User.query.filter(User.uuid == uuid).first() or abort(204)
+            if user is not None:
+                User.remove_user(uuid)
+                # user_driver.remove_client(uuid)
+                hiddify.quick_apply_users()
+                return jsonify({'status': 200, 'msg': 'ok'})
+            else:
+                return jsonify({'status': 204, 'msg': 'user not found'})
+        else:
+            return jsonify({'status': 204, 'msg': 'uuid not found'})
+    # end aliz dev
+
 class bulkUsers(Resource):
-    decorators = [hiddify.super_admin]
+    decorators = [login_required({Role.super_admin})]
 
     def get(self):
         try:
@@ -90,9 +98,9 @@ class bulkUsers(Resource):
             except Exception as e:
                 return jsonify({'status': 250, 'msg': f"error{e}"})
         else:
-            hiddify.bulk_register_users(users)
+            User.bulk_register(users)
             for newuser in users:
-                user = user_by_uuid(newuser['uuid']) or abort(202, f"cant find user{newuser['uuid']}")
+                user = User.by_uuid(newuser['uuid']) or abort(202, f"cant find user{newuser['uuid']}")
                 user_driver.add_client(user)
             hiddify.quick_apply_users()
 
@@ -106,11 +114,8 @@ class bulkUsers(Resource):
             return jsonify({'status': 200, 'msg': 'All users  deleted successfully'})
         except Exception as e:
                 return jsonify({'status': 250, 'msg': f"error{e}"})
-    
-
-    
 class Sub(Resource):
-    decorators = [hiddify.super_admin]
+    decorators = [login_required({Role.super_admin})]
 
     def get(self):
         return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
@@ -127,7 +132,7 @@ class Sub(Resource):
             return jsonify({'status': 502, 'msg': 'Nodes File not created\n{e}'})
         
 class hidybot_configs(Resource):
-    decorators = [hiddify.super_admin]
+    decorators = [login_required({Role.super_admin})]
 
     def get(self):
         return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
@@ -146,7 +151,7 @@ class hidybot_configs(Resource):
 
 
 class UpdateUsage(Resource):
-    decorators = [hiddify.super_admin]        
+    decorators = [login_required({Role.super_admin})]        
     def get(self):
         try:
             log_dir = '/opt/hiddify-config/log'
@@ -184,7 +189,7 @@ class UpdateUsage(Resource):
             return jsonify({'status': 502, 'msg': f'error\n{e}','code':str(e.__traceback__.tb_lineno)})
 
 class Status(Resource):
-    decorators = [hiddify.super_admin]
+    decorators = [login_required({Role.super_admin})]
     
     def get(self):
         config_file = '/usr/local/bin/hiddify-api-expanded/version.json'
@@ -202,15 +207,14 @@ class Status(Resource):
             else:
                 return jsonify({'status': 502, 'msg': 'error\nversion file not found'})
         except Exception as e:
-            return jsonify({'status': 502, 'msg': f'error\n{e}','code':str(e.__traceback__.tb_lineno)})
-        
+            return jsonify({'status': 502, 'msg': f'error\n{e}','code':str(e.__traceback__.tb_lineno)})    
 class AdminUserResource(Resource):
-    decorators = [hiddify.super_admin]
+    decorators = [login_required({Role.super_admin})]
 
     def get(self, uuid=None):
         uuid = request.args.get('uuid')
         if uuid:
-            admin = get_admin_user_db(uuid) or abort(404, "user not found")
+            admin = AdminUser.by_uuid(uuid) or abort(404, "user not found")
             return jsonify(admin.to_dict())
 
         admins = AdminUser.query.all() or abort(502, "WTF!")
@@ -219,13 +223,13 @@ class AdminUserResource(Resource):
     def post(self):
         data = request.json
         uuid = data.get('uuid') or abort(422, "Parameter issue: 'uuid'")
-        hiddify.add_or_update_admin(**data)
+        AdminUser.add_or_update(**data)  # type: ignore
 
         return jsonify({'status': 200, 'msg': 'ok'})
 
     def delete(self):
         uuid = request.args.get('uuid') or abort(422, "Parameter issue: 'uuid'")
-        admin = get_admin_user_db(uuid) or abort(404, "admin not found")
+        admin = AdminUser.by_uuid(uuid) or abort(404, "admin not found")
         admin.remove()
         return jsonify({'status': 200, 'msg': 'ok'})
 
@@ -290,7 +294,7 @@ def bot_update_user(**user):
 
 def bulk_delete_users(users=[], commit=True):
     for u in users:
-        user = user_by_uuid(u['uuid'])
+        user = User.by_uuid(u['uuid'])
         db.session.delete(user)
         user_driver.remove_client(user)
     db.session.commit()
