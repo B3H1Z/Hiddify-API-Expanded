@@ -14,7 +14,8 @@ HIDY_BOT_ID="@HidyBotGroup"
 api_location="hiddifypanel/panel/commercial/restapi"
 user_location="hiddifypanel/panel/user"
 script_location="/usr/local/bin/hiddify-api-expanded"
-
+base_location="/opt/Hiddify-API-Expanded" 
+base_location_api="/opt/Hiddify-API-Expanded/api" 
 # Function to display error messages and exit
 function display_error_and_exit() {
   echo -e "${RED}Error: $1${RESET}"
@@ -85,11 +86,28 @@ if command -v pip3 &> /dev/null; then
     echo "HiddifyPanel version: $version"
     echo "HiddifyPanel location: $pip_location_1"
 
+    # Version Example: 1.0.0
+    # Split the version string into an array
+    IFS='.' read -r -a version_parts <<<"$version"
+    # Get the major, minor, and patch version numbers
+    major_version=${version_parts[0]}
+    # if major version is 8 
+    if [ "$major_version" -eq 8 ]; then
+        echo "HiddifyPanel version is 8"
+        # add /v8 to the base location
+        base_location_api="$base_location_api/v8"
+    fi
+    # if major version is 9
+    if [ "$major_version" -eq 9 ]; then
+        echo "HiddifyPanel version is 9"
+        base_location_api="$base_location_api/v9"
+    fi
+
     echo "Replacing files"
-    cp /opt/Hiddify-API-Expanded/__init__.py "$pip_location_1/__init__.py"
-    cp /opt/Hiddify-API-Expanded/resources.py "$pip_location_1/resources.py"
-    cp /opt/Hiddify-API-Expanded/user.py "$pip_location/$user_location/user.py"
-    cp /opt/Hiddify-API-Expanded/update.py "$script_location/update.py"
+    cp "$base_location_api/__init__.py" "$pip_location_1/__init__.py"
+    cp "$base_location_api/resources.py" "$pip_location_1/resources.py"
+    cp "$base_location_api/user.py" "$pip_location/$user_location/user.py"
+    cp "$base_location/update.py" "$script_location/update.py"
 
     chmod +x "$script_location/update.py"
     cp /opt/Hiddify-API-Expanded/version.json "$script_location/version.json"
