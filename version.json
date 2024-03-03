@@ -1,5 +1,5 @@
 {
     "version":"2.7.2",
-    "public":false,
+    "public":true,
     "max_panel_allowed_version":"9.0.0"
 }
