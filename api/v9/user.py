@@ -299,9 +299,9 @@ class UserView(FlaskView):
                     for url in urls:
                         try:
                             real_configs = ""
-                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            # PANEL_DIR = urlparse(url).path.split('/')
+                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -333,9 +333,10 @@ class UserView(FlaskView):
                     resp += "\n"
                     for url in urls:
                         try:
-                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            # PANEL_DIR = urlparse(url).path.split('/')
+                            # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -370,9 +371,10 @@ class UserView(FlaskView):
                 resp += "\n"
                 for url in urls:
                     try:
-                        BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                        PANEL_DIR = urlparse(url).path.split('/')
-                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                        # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                        # PANEL_DIR = urlparse(url).path.split('/')
+                        # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                        url_sub = f"{url}/{g.user_uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -395,7 +397,7 @@ class UserView(FlaskView):
     
     @route('/all2.txt', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def all_configs2(self, base64=False):
+    def all_configs(self, base64=False):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
         c = get_common_data(g.account.uuid, mode)
@@ -409,6 +411,7 @@ class UserView(FlaskView):
         if base64:
             resp = hutils.encode.do_base_64(resp)
         return add_headers(resp, c)
+
     @ route('/hidybot.txt', methods=["GET", "HEAD"])
     def hidybot_configs(self, base64=False):
         mode = "new"  # request.args.get("mode")
@@ -492,9 +495,10 @@ class UserView(FlaskView):
                     for url in urls:
                         try:
                             real_configs = ""
-                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            # PANEL_DIR = urlparse(url).path.split('/')
+                            # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -526,9 +530,10 @@ class UserView(FlaskView):
                     resp += "\n"
                     for url in urls:
                         try:
-                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            # PANEL_DIR = urlparse(url).path.split('/')
+                            # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -563,9 +568,10 @@ class UserView(FlaskView):
                 resp += "\n"
                 for url in urls:
                     try:
-                        BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                        PANEL_DIR = urlparse(url).path.split('/')
-                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                        # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                        # PANEL_DIR = urlparse(url).path.split('/')
+                        # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                        url_sub = f"{url}/{g.user_uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -616,9 +622,9 @@ class UserView(FlaskView):
                     resp += "\n"
                     for url in urls:
                         try:
-                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all.txt"
+                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            # PANEL_DIR = urlparse(url).path.split('/')
+                            url_sub = f"{url}/{g.user_uuid}/all.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 resp += req.text + "\n"
@@ -775,6 +781,7 @@ class UserView(FlaskView):
                                 return add_headers(resp, c)
                             except Exception as e:
                                 return jsonify({'status': 502, 'msg': 'error:\n{e}'})
+                            
     @ route("/offline.html")
     @login_required(roles={Role.user})
     def offline():
@@ -807,7 +814,7 @@ def get_domain_information(no_domain=False, filter_domain=None, alternative=None
         db_domain = Domain.query.filter(Domain.domain == domain).first()
 
         if not db_domain:
-            parts = domain.split('.')
+            parts = domain.split('.')  # TODO fix bug domain maybe null
             parts[0] = "*"
             domain_new = ".".join(parts)
             db_domain = Domain.query.filter(Domain.domain == domain_new).first()
@@ -831,19 +838,19 @@ def get_domain_information(no_domain=False, filter_domain=None, alternative=None
             # print("autocdn ip mode ", d.cdn_ip)
         if "*" in d.domain:
             d.domain = d.domain.replace("*", hutils.random.get_random_string(5, 15))
+
     if len(domains) == 0:
         domains = [Domain(id=0, domain=alternative, mode=DomainType.direct, cdn_ip='', show_domains=[], child_id=0)]
         domains[0].has_auto_ip = True
 
-    return domains, has_auto_cdn
+    return domains, db_domain, has_auto_cdn
 
 
 def get_common_data(user_uuid, mode, no_domain=False, filter_domain=None):
     '''Usable for user account'''
     # uuid_secret=str(uuid.UUID(user_secret))
-    domains, has_auto_cdn = get_domain_information(no_domain, filter_domain, urlparse(request.base_url).hostname)
-    domains_valid = [d for d in domains if d.mode != DomainType.fake and d.mode != DomainType.reality]
-    db_domain = domains_valid[0]
+    domains, db_domain, has_auto_cdn = get_domain_information(no_domain, filter_domain, request.host)
+
     domain = db_domain.domain
     user: User = g.account if g.account.uuid == user_uuid else User.by_uuid(f'{user_uuid}')
     if user is None:
@@ -856,7 +863,7 @@ def get_common_data(user_uuid, mode, no_domain=False, filter_domain=None):
 
     }
 
-    expire_days = user.remaining_days()
+    expire_days = user.remaining_days
     reset_days = user.days_to_reset()
     if reset_days >= expire_days:
         reset_days = 1000
@@ -891,7 +898,7 @@ def get_common_data(user_uuid, mode, no_domain=False, filter_domain=None):
         'domains': domains,
         "bot": g.get('bot', None),
         "db_domain": db_domain,
-        "telegram_enable": hiddify.is_telegram_proxy_enable(),
+        "telegram_enable": hiddify.is_telegram_proxy_enable(domains),
         "ip": user_ip,
         "ip_debug": hutils.network.auto_ip_selector.get_real_user_ip_debug(user_ip),
         "asn": asn,
