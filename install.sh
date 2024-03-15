@@ -97,10 +97,10 @@ if command -v pip3 &> /dev/null; then
         # add /v8 to the base location
         base_location_api="$base_location_api/v8"
     fi
-    # if major version is 9
-    if [ "$major_version" -eq 9 ]; then
-        echo "HiddifyPanel version is 9"
-        base_location_api="$base_location_api/v9"
+    # if major version is 10
+    if [ "$major_version" -eq 10 ]; then
+        echo "HiddifyPanel version is 10"
+        base_location_api="$base_location_api/v10"
     fi
 
     echo "Replacing files"
