@@ -13,7 +13,7 @@ from hiddifypanel.models import *
 from hiddifypanel.auth import login_required
 from hiddifypanel.panel import hiddify
 from hiddifypanel.drivers import user_driver
-from hiddifypanel.panel.database import db
+from hiddifypanel.database import db
 
 
 class UserResource(Resource):
@@ -28,9 +28,10 @@ class UserResource(Resource):
         if uuid and actoin == 'delete':
             user = User.by_uuid(uuid) or abort(404, "user not found")
             try:
-                db.session.delete(user)
-                db.session.commit()
-                user_driver.remove_client(user)
+                # db.session.delete(user)
+                # db.session.commit()
+                # user_driver.remove_client(user)
+                user.remove()
                 hiddify.quick_apply_users()
                 
                 return jsonify({'status': 200, 'msg': 'ok user deleted'})

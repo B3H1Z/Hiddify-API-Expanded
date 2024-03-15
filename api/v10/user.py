@@ -5,7 +5,6 @@ import re
 
 from flask import render_template, request, Response, g
 from apiflask import abort
-from . import link_maker
 from flask_classful import FlaskView, route
 from urllib.parse import parse_qs, urlparse
 from flask_babel import gettext as _
@@ -16,7 +15,6 @@ from hiddifypanel.database import db
 from hiddifypanel.panel import hiddify
 from hiddifypanel.models import *
 from hiddifypanel import hutils
-from hiddifypanel import cache
 
 import requests
 import json
@@ -58,14 +56,6 @@ class UserView(FlaskView):
     @login_required(roles={Role.user})
     def sub64(self):
         return self.all_configs(base64=True)
-
-    @route("/xray/")
-    @route("/xray")
-    @login_required(roles={Role.user})
-    def xray(self):
-        c = c = get_common_data(g.account.uuid, mode="new")
-        configs = hutils.proxy.xray.configs_as_json(c['domains'], c['profile_title'])
-        return add_headers(configs, c, 'application/json')
 
     @route("/singbox/")
     @route("/singbox")
@@ -202,7 +192,7 @@ class UserView(FlaskView):
         if request.method == 'HEAD':
             resp = ""
         else:
-            resp = hutils.proxy.singbox.configs_as_json(**c)
+            resp = hutils.proxy.singbox.make_full_singbox_config(**c)
 
         return add_headers(resp, c, 'application/json')
 
@@ -405,7 +395,7 @@ class UserView(FlaskView):
     
     @route('/all2.txt', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def all_configs(self, base64=False):
+    def all_configs2(self, base64=False):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
         c = get_common_data(g.account.uuid, mode)
@@ -620,7 +610,7 @@ class UserView(FlaskView):
             if request.method == 'HEAD':
                 resp = ""
             else:
-                resp = link_maker.make_v2ray_configs(**c)
+                resp = hutils.proxy.xray.make_v2ray_configs(**c)
                 try:
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
