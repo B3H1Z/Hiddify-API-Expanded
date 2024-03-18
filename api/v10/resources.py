@@ -15,8 +15,6 @@ from hiddifypanel.panel import hiddify
 from hiddifypanel.drivers import user_driver
 from hiddifypanel.database import db
 
-from VERSION import __version__
-
 from hiddifypanel.VERSION import __version__
 
 class UserResource(Resource):
