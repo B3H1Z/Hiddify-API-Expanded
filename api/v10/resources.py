@@ -15,6 +15,7 @@ from hiddifypanel.panel import hiddify
 from hiddifypanel.drivers import user_driver
 from hiddifypanel.database import db
 
+from hiddifypanel.VERSION import __version__
 
 class UserResource(Resource):
     decorators = [login_required({Role.super_admin})]
@@ -191,7 +192,6 @@ class UpdateUsage(Resource):
 
 class Status(Resource):
     decorators = [login_required({Role.super_admin})]
-    
     def get(self):
         config_file = '/usr/local/bin/hiddify-api-expanded/version.json'
         cron_file = '/etc/cron.d/hiddify_usage_update'
@@ -204,7 +204,7 @@ class Status(Resource):
                 cron = re.sub(r'\s+', ' ', cron).strip()
                 if cron == '':
                     cron = False
-                return jsonify({'status': 200, 'msg': 'ok', 'data': {'version': version, 'cron': cron}})
+                return jsonify({'status': 200, 'msg': 'ok', 'data': {'version': version, 'cron': cron, 'panel_version':__version__}})
             else:
                 return jsonify({'status': 502, 'msg': 'error\nversion file not found'})
         except Exception as e:
