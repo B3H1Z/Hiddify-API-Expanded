@@ -104,6 +104,7 @@ if command -v pip3 &> /dev/null; then
         pip_location_1="$pip_location1/v1"
         echo "HiddifyPanel location: $pip_location_1"
     fi
+    echo "!!!!!!!!!!!!!!!!!"    
 
     echo "Replacing files"
     cp "$base_location_api/__init__.py" "$pip_location_1/__init__.py"
