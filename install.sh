@@ -102,6 +102,7 @@ if command -v pip3 &> /dev/null; then
         echo "HiddifyPanel version is 10"
         base_location_api="$base_location_api/v10"
         pip_location_1="$pip_location1/v1"
+        echo "HiddifyPanel location: $pip_location_1"
     fi
 
     echo "Replacing files"
