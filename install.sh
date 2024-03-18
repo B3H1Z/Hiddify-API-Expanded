@@ -101,10 +101,11 @@ if command -v pip3 &> /dev/null; then
     if [ "$major_version" -eq 10 ]; then
         echo "HiddifyPanel version is 10"
         base_location_api="$base_location_api/v10"
-        pip_location_1="$pip_location1/v1"
-        echo "HiddifyPanel location: $pip_location_1"
+        #remove old files
+        rm -rf "$pip_location_1/__init__.py"
+        rm -rf "$pip_location_1/resources.py"
+        pip_location_1="$pip_location_1/v1"
     fi
-    echo "!!!!!!!!!!!!!!!!!"    
 
     echo "Replacing files"
     cp "$base_location_api/__init__.py" "$pip_location_1/__init__.py"
