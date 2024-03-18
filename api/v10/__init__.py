@@ -1,3 +1,4 @@
+# Description: Hiddify API Expanded Edition
 from flask_apispec import FlaskApiSpec
 from flask_apispec.extension import FlaskApiSpec
 from marshmallow import Schema, fields

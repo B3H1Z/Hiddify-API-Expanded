@@ -1,3 +1,4 @@
+# Description: Hiddify API Expanded Edition
 import json
 import os
 import re
