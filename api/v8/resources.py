@@ -17,7 +17,7 @@ from hiddifypanel.drivers import user_driver
 from hiddifypanel.models import User
 from hiddifypanel.panel.database import db
 
-
+from VERSION import __version__
 
 
 class UserResource(Resource):
@@ -198,7 +198,7 @@ class Status(Resource):
                 cron = re.sub(r'\s+', ' ', cron).strip()
                 if cron == '':
                     cron = False
-                return jsonify({'status': 200, 'msg': 'ok', 'data': {'version': version, 'cron': cron}})
+                return jsonify({'status': 200, 'msg': 'ok', 'data': {'version': version, 'cron': cron, 'panel_version':__version__}})
             else:
                 return jsonify({'status': 502, 'msg': 'error\nversion file not found'})
         except Exception as e:
