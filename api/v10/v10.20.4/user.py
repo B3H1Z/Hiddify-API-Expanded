@@ -441,7 +441,7 @@ class UserView(FlaskView):
             #         limit = int(limit)
             #     except Exception as e:
             #         limit = None
-        c = get_common_data(g.user_uuid, mode)
+        c = get_common_data(g.account.uuid, mode)
         # response.content_type = 'text/plain';
         urls = None
         resp = None
