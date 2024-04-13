@@ -91,6 +91,7 @@ if command -v pip3 &> /dev/null; then
     IFS='.' read -r -a version_parts <<<"$version"
     # Get the major, minor, and patch version numbers
     major_version=${version_parts[0]}
+    minor_version=${version_parts[1]}
     # if major version is 8 
     if [ "$major_version" -eq 8 ]; then
         echo "HiddifyPanel version is 8"
@@ -101,6 +102,12 @@ if command -v pip3 &> /dev/null; then
     if [ "$major_version" -eq 10 ]; then
         echo "HiddifyPanel version is 10"
         base_location_api="$base_location_api/v10"
+        pip_location_1="$pip_location_1/v1"
+    fi
+    # if minor version is 10.20
+    if [ "$minor_version" -eq 20 ]; then
+        echo "HiddifyPanel version is 10.20"
+        base_location_api="$base_location_api/v10/v10.20.4"
         pip_location_1="$pip_location_1/v1"
     fi
 
