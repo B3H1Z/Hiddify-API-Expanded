@@ -92,6 +92,9 @@ if command -v pip3 &> /dev/null; then
     # Get the major, minor, and patch version numbers
     major_version=${version_parts[0]}
     minor_version=${version_parts[1]}
+    echo "Major version: $major_version"
+    echo "Minor version: $minor_version"
+    echo "Version: $version"
     # if major version is 8 
     if [ "$major_version" -eq 8 ]; then
         echo "HiddifyPanel version is 8"
