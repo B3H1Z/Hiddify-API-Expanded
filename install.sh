@@ -99,16 +99,16 @@ if command -v pip3 &> /dev/null; then
         base_location_api="$base_location_api/v8"
     fi
     # if major version is 10
-    if [ "$major_version" -eq 10 ]; then
+    if [ "$major_version" -eq 10 ] && [ "$minor_version" -lt 20 ]; then
         echo "HiddifyPanel version is 10"
         base_location_api="$base_location_api/v10"
         pip_location_1="$pip_location_1/v1"
     fi
     # if minor version is 10.20
-    if [ "$minor_version" -eq 20 ]; then
-        echo "HiddifyPanel version is 10.20"
-        base_location_api="$base_location_api/v10.20.4"
-        pip_location_1="$pip_location_1/v1"
+    elif [ "$major_version" -eq 10 ] && [ "$minor_version" -eq 20 ]; then
+    echo "HiddifyPanel version is 10.20"
+    base_location_api="$base_location_api/v10/v10.20.4"
+    pip_location_1="$pip_location_1/v1"
     fi
 
     echo "Replacing files"
