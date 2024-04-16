@@ -234,7 +234,7 @@ class UserView(FlaskView):
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
         except Exception as e:
-            pass
+            return str(e)
         if bot_configs:
             username = bot_configs.get("username", False)
             randomize = bot_configs.get("randomize", False)
@@ -300,7 +300,7 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    return str(e)
                 
                 if urls:
                     for url in urls:
@@ -308,7 +308,7 @@ class UserView(FlaskView):
                             real_configs = ""
                             # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             # PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -325,7 +325,7 @@ class UserView(FlaskView):
                                         real_configs += config[2]+"\n"
                                 configs_list.append(real_configs)
                         except Exception as e:
-                            pass
+                            return str(e)
                 if configs_list:
                     random.shuffle(configs_list)
                     resp = fake_config + '\n'.join(configs_list)
@@ -334,7 +334,7 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    return str(e)
                 
                 if urls:
                     resp += "\n"
@@ -343,7 +343,7 @@ class UserView(FlaskView):
                             # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             # PANEL_DIR = urlparse(url).path.split('/')
                             # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
-                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -359,7 +359,7 @@ class UserView(FlaskView):
                                                 continue
                                         resp += config[2]+"\n"
                         except Exception as e:
-                            pass
+                            return str(e)
                 configs = [line for line in resp.split('\n') if line.strip() != '']
                 if len(configs) > 2:
                     first_configs = configs[0:1]
@@ -372,7 +372,7 @@ class UserView(FlaskView):
                 with open("nodes.json", 'r') as f:
                     urls = json.load(f)
             except Exception as e:
-                pass
+                return str(e)
             
             if urls:
                 resp += "\n"
@@ -381,7 +381,7 @@ class UserView(FlaskView):
                         # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                         # PANEL_DIR = urlparse(url).path.split('/')
                         # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
-                        url_sub = f"{url}/{g.user_uuid}/all2.txt"
+                        url_sub = f"{url}/{g.account.uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -397,7 +397,7 @@ class UserView(FlaskView):
                                             continue
                                     resp += config[2]+"\n"
                     except Exception as e:
-                        pass
+                        return str(e)
         if base64:
             resp = hutils.encode.do_base_64(resp)
         return add_headers(resp, c)
@@ -431,7 +431,7 @@ class UserView(FlaskView):
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
         except Exception as e:
-            pass
+            return str(e)
         if bot_configs:
             username = bot_configs.get("username", False)
             randomize = bot_configs.get("randomize", False)
@@ -442,7 +442,7 @@ class UserView(FlaskView):
             #         limit = int(limit)
             #     except Exception as e:
             #         limit = None
-        c = get_common_data(g.user_uuid, mode)
+        c = get_common_data(g.account.uuid, mode)
         # response.content_type = 'text/plain';
         urls = None
         resp = None
@@ -496,7 +496,7 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    return str(e)
                 
                 if urls:
                     for url in urls:
@@ -505,7 +505,7 @@ class UserView(FlaskView):
                             # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             # PANEL_DIR = urlparse(url).path.split('/')
                             # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
-                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -522,7 +522,7 @@ class UserView(FlaskView):
                                         real_configs += config[2]+"\n"
                                 configs_list.append(real_configs)
                         except Exception as e:
-                            pass
+                            return str(e)
                 if configs_list:
                     random.shuffle(configs_list)
                     resp = fake_config + '\n'.join(configs_list)
@@ -531,7 +531,7 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    return str(e)
                 
                 if urls:
                     resp += "\n"
@@ -540,7 +540,7 @@ class UserView(FlaskView):
                             # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             # PANEL_DIR = urlparse(url).path.split('/')
                             # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
-                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -556,7 +556,7 @@ class UserView(FlaskView):
                                                 continue
                                         resp += config[2]+"\n"
                         except Exception as e:
-                            pass
+                            return str(e)
                 configs = [line for line in resp.split('\n') if line.strip() != '']
                 if len(configs) > 2:
                     first_configs = configs[0:1]
@@ -569,7 +569,7 @@ class UserView(FlaskView):
                 with open("nodes.json", 'r') as f:
                     urls = json.load(f)
             except Exception as e:
-                pass
+                return str(e)
             
             if urls:
                 resp += "\n"
@@ -578,7 +578,7 @@ class UserView(FlaskView):
                         # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                         # PANEL_DIR = urlparse(url).path.split('/')
                         # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
-                        url_sub = f"{url}/{g.user_uuid}/all2.txt"
+                        url_sub = f"{url}/{g.account.uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
@@ -594,7 +594,7 @@ class UserView(FlaskView):
                                             continue
                                     resp += config[2]+"\n"
                     except Exception as e:
-                        pass
+                        return str(e)
         # if limit:
 
         if base64:
@@ -608,11 +608,11 @@ class UserView(FlaskView):
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
         except Exception as e:
-            pass
+            return str(e)
         if bot_configs:
             fragment_configs = bot_configs.get("fragment", None)
         if fragment_configs:
-            c = get_common_data(g.user_uuid, "new")
+            c = get_common_data(g.account.uuid, "new")
             # response.content_type = 'text/plain';
             urls = None
             resp = None
@@ -624,19 +624,19 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    return str(e)
                 if urls:
                     resp += "\n"
                     for url in urls:
                         try:
                             # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             # PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{url}/{g.user_uuid}/all.txt"
+                            url_sub = f"{url}/{g.account.uuid}/all.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 resp += req.text + "\n"
                         except Exception as e:
-                            pass
+                            return str(e)
 
                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
                 for config in configs:
