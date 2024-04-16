@@ -16,6 +16,9 @@ from hiddifypanel.models import *
 from hiddifypanel import hutils
 
 
+import requests
+import json
+
 class UserView(FlaskView):
 
     @route('/useragent/')
