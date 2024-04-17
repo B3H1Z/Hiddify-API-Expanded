@@ -19,7 +19,16 @@ from hiddifypanel import hutils
 
 import requests
 import json
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
+
+file_handler = logging.FileHandler('api-expanded.log')
+formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
 
 class UserView(FlaskView):
 
@@ -234,7 +243,7 @@ class UserView(FlaskView):
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
         except Exception as e:
-            pass
+            logger.exception(f"Error in loading hidybotconfigs.json {e}")
         if bot_configs:
             username = bot_configs.get("username", False)
             randomize = bot_configs.get("randomize", False)
@@ -300,7 +309,7 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
                     for url in urls:
@@ -325,7 +334,7 @@ class UserView(FlaskView):
                                         real_configs += config[2]+"\n"
                                 configs_list.append(real_configs)
                         except Exception as e:
-                            pass
+                            logger.exception(f"Error in loading {url} configs {e}")
                 if configs_list:
                     random.shuffle(configs_list)
                     resp = fake_config + '\n'.join(configs_list)
@@ -334,7 +343,7 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
                     resp += "\n"
@@ -359,7 +368,7 @@ class UserView(FlaskView):
                                                 continue
                                         resp += config[2]+"\n"
                         except Exception as e:
-                            pass
+                            logger.exception(f"Error in loading {url} configs {e}")
                 configs = [line for line in resp.split('\n') if line.strip() != '']
                 if len(configs) > 2:
                     first_configs = configs[0:1]
@@ -372,7 +381,7 @@ class UserView(FlaskView):
                 with open("nodes.json", 'r') as f:
                     urls = json.load(f)
             except Exception as e:
-                pass
+                logger.exception(f"Error in loading nodes.json {e}")
             
             if urls:
                 resp += "\n"
@@ -397,7 +406,7 @@ class UserView(FlaskView):
                                             continue
                                     resp += config[2]+"\n"
                     except Exception as e:
-                        pass
+                        logger.exception(f"Error in loading {url} configs {e}")
         if base64:
             resp = hutils.encode.do_base_64(resp)
         return add_headers(resp, c)
@@ -431,7 +440,7 @@ class UserView(FlaskView):
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
         except Exception as e:
-            pass
+            logger.exception(f"Error in loading hidybotconfigs.json {e}")
         if bot_configs:
             username = bot_configs.get("username", False)
             randomize = bot_configs.get("randomize", False)
@@ -449,6 +458,7 @@ class UserView(FlaskView):
         if request.method == 'HEAD':
             resp = ""
         else:
+            # render_template('all_configs.txt', **c, base64=hutils.encode.do_base_64)
             resp = hutils.proxy.xray.make_v2ray_configs(**c)
         if username:
             configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
@@ -496,7 +506,7 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
                     for url in urls:
@@ -504,7 +514,6 @@ class UserView(FlaskView):
                             real_configs = ""
                             # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
                             # PANEL_DIR = urlparse(url).path.split('/')
-                            # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                             url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
@@ -522,7 +531,7 @@ class UserView(FlaskView):
                                         real_configs += config[2]+"\n"
                                 configs_list.append(real_configs)
                         except Exception as e:
-                            pass
+                            logger.exception(f"Error in loading {url} configs {e}")
                 if configs_list:
                     random.shuffle(configs_list)
                     resp = fake_config + '\n'.join(configs_list)
@@ -531,7 +540,7 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
                     resp += "\n"
@@ -556,7 +565,7 @@ class UserView(FlaskView):
                                                 continue
                                         resp += config[2]+"\n"
                         except Exception as e:
-                            pass
+                            logger.exception(f"Error in loading {url} configs {e}")
                 configs = [line for line in resp.split('\n') if line.strip() != '']
                 if len(configs) > 2:
                     first_configs = configs[0:1]
@@ -569,7 +578,7 @@ class UserView(FlaskView):
                 with open("nodes.json", 'r') as f:
                     urls = json.load(f)
             except Exception as e:
-                pass
+                logger.exception(f"Error in loading nodes.json {e}")
             
             if urls:
                 resp += "\n"
@@ -594,9 +603,7 @@ class UserView(FlaskView):
                                             continue
                                     resp += config[2]+"\n"
                     except Exception as e:
-                        pass
-        # if limit:
-
+                        logger.exception(f"Error in loading {url} configs {e}")
         if base64:
             resp = hutils.encode.do_base_64(resp)
         return add_headers(resp, c)
@@ -608,7 +615,7 @@ class UserView(FlaskView):
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
         except Exception as e:
-            pass
+            logger.exception(f"Error in loading hidybotconfigs.json {e}")
         if bot_configs:
             fragment_configs = bot_configs.get("fragment", None)
         if fragment_configs:
@@ -624,7 +631,7 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    logger.exception(f"Error in loading nodes.json {e}")
                 if urls:
                     resp += "\n"
                     for url in urls:
@@ -636,7 +643,7 @@ class UserView(FlaskView):
                             if req.status_code == 200:
                                 resp += req.text + "\n"
                         except Exception as e:
-                            pass
+                            logger.exception(f"Error in loading {url} configs {e}")
 
                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
                 for config in configs:
