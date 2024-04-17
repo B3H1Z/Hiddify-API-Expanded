@@ -15,8 +15,20 @@ from hiddifypanel.auth import login_required
 from hiddifypanel.panel import hiddify
 from hiddifypanel.drivers import user_driver
 from hiddifypanel.database import db
+from hiddifypanel import hutils
 
 from hiddifypanel.VERSION import __version__
+
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
+
+file_handler = logging.FileHandler('hidibot.log')
+formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
 
 class UserResource(Resource):
     decorators = [login_required({Role.super_admin})]
@@ -85,6 +97,7 @@ class bulkUsers(Resource):
             users = User.query.filter(User.uuid.in_(uuid_list)).all()
             return jsonify([user.to_dict() for user in users])
         except Exception as e:
+            logger.exception(f"Error in get bulk users {e}")
             return jsonify({'status': 250, 'msg': f"error{e}"})
 
     # def get(self):
@@ -99,6 +112,7 @@ class bulkUsers(Resource):
                 hiddify.quick_apply_users()
                 return jsonify({'status': 200, 'msg': 'All users  updated by new method successfully'})
             except Exception as e:
+                logger.exception(f"Error in post bulk users for update {e}")
                 return jsonify({'status': 250, 'msg': f"error{e}"})
         else:
             User.bulk_register(users)
@@ -116,6 +130,7 @@ class bulkUsers(Resource):
             hiddify.quick_apply_users()
             return jsonify({'status': 200, 'msg': 'All users  deleted successfully'})
         except Exception as e:
+                logger.exception(f"Error in delete bulk users {e}")
                 return jsonify({'status': 250, 'msg': f"error{e}"})
 class Sub(Resource):
     decorators = [login_required({Role.super_admin})]
@@ -132,6 +147,7 @@ class Sub(Resource):
                 json.dump(list_url, f)
                 return jsonify({'status': 200, 'msg': 'Nodes was saved successfully'})
         except Exception as e:
+            logger.exception(f"Error in post nodes.json {e}")
             return jsonify({'status': 502, 'msg': 'Nodes File not created\n{e}'})
         
 class hidybot_configs(Resource):
@@ -149,6 +165,7 @@ class hidybot_configs(Resource):
                 json.dump(configs, f)
                 return jsonify({'status': 200, 'msg': 'configs was saved successfully'})
         except Exception as e:
+            logger.exception(f"Error in post hidybotconfigs.json {e}")
             return jsonify({'status': 502, 'msg': 'configs File not created\n{e}'})
 
 
@@ -290,9 +307,9 @@ def bot_update_user(**user):
     # if not is_valid():return
     dbuser = User.query.filter_by(uuid=user['uuid']).first()
     if user.get('start_date', ''):
-        dbuser.start_date = hiddify.json_to_date(user['start_date'])
+        dbuser.start_date = hutils.convert.json_to_date(user['start_date'])
     dbuser.current_usage_GB = user['current_usage_GB']
-    dbuser.last_online = hiddify.json_to_time(user.get('last_online')) or datetime.datetime.min
+    dbuser.last_online = hutils.convert.json_to_time(user.get('last_online')) or datetime.datetime.min
 
 def bulk_delete_users(users=[], commit=True):
     for u in users:
