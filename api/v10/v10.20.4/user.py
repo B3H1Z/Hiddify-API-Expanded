@@ -24,7 +24,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
-file_handler = logging.FileHandler('hidibot.log')
+file_handler = logging.FileHandler('api-expanded.log')
 formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
 file_handler.setFormatter(formatter)
 
