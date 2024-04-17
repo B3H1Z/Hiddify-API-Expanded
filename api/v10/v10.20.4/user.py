@@ -266,47 +266,24 @@ class UserView(FlaskView):
             # render_template('all_configs.txt', **c, base64=hutils.encode.do_base_64)
             resp = hutils.proxy.xray.make_v2ray_configs(c['domains'], c['user'], c['expire_days'], c['ip_debug'])
         if username:
-            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
-            for config in configs:
-                if config[2]:
-                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                    if trojan_sni:
-                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                            # if hconfig(ConfigEnum.lang) == 'fa':
-                            #     encoded_name = f" کاربر:{c['user'].name}"
-                            # else:
-                            #     encoded_name = f" 👤:{c['user'].name}"
-                            encoded_name = f" 👤:{c['user'].name}"
-                            add_name = config[2] + encoded_name
-                            resp = resp.replace(config[2], add_name)
-        # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
-        # if match:
-        #     # Add encoded_name after #
-           
-        #     # Wrap the user name in Unicode control characters to specify left-to-right display
-        #     # user_name = '\u202A' + user_name + '\u202C'
-        #     # encoded_name = hiddify.url_encode(user_name)
-        #     # encoded_name = hiddify.url_encode(f"👤User:{c['user'].name} ")
-        #     resp = resp[:match.end()] + encoded_name + resp[match.end():]
+            # شامل اینتر اخر نمیشود
+            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*[^\n]'
+            trojan_urls = re.findall(trojan_pattern, resp)
+            fake_config = trojan_urls[0]
+            encoded_name = f" 👤:{c['user'].name}"
+            new_fake_config = fake_config + encoded_name
+            resp = resp.replace(fake_config, new_fake_config)
         if randomize:
             if randomize_mode == "servers":
-                fake_config = ""
                 configs_list = []
-                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
-                real_configs = ""
-                for config in configs:
-                    if config[0]:
-                        real_configs += config[0]+"\n"
-                    elif config[1]:
-                        real_configs += config[1]+"\n"
-                    elif config[2]:
-                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                        if trojan_sni:
-                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                fake_config += config[2]+"\n"
-                                continue
-                        real_configs += config[2]+"\n"
-                configs_list.append(real_configs)
+                # configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)|tuic:\/\/[^\n]+)|(hysteria2:\/\/[^\n]+)|(hysteria:\/\/[^\n]+)', resp)
+                #شامل اینتر اخر می شود
+                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                trojan_urls = re.findall(trojan_pattern, resp)
+                fake_config = trojan_urls[0] 
+                resp = resp.replace(fake_config, "")
+                configs_list.append(resp)
+                # configs_list = resp.split("\n")
                 try:
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
@@ -316,25 +293,17 @@ class UserView(FlaskView):
                 if urls:
                     for url in urls:
                         try:
-                            real_configs = ""
-                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            # PANEL_DIR = urlparse(url).path.split('/')
                             url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
-                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                                for config in configs:
-                                    if config[0]:
-                                        real_configs += config[0]+"\n"
-                                    elif config[1]:
-                                        real_configs += config[1]+"\n"
-                                    elif config[2]:
-                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                        if trojan_sni:
-                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                                continue
-                                        real_configs += config[2]+"\n"
-                                configs_list.append(real_configs)
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                node_fake_config = trojan_urls[0]
+                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                # configs_list.append("\n")
+                                configs_list.append(nodes_configs)
+                                # configs_list += nodes_configs.split("\n")
                         except Exception as e:
                             logger.exception(f"Error in loading {url} configs {e}")
                 if configs_list:
@@ -348,27 +317,18 @@ class UserView(FlaskView):
                     logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
-                    resp += "\n"
                     for url in urls:
+                        resp += "\n"
                         try:
-                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            # PANEL_DIR = urlparse(url).path.split('/')
-                            # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                             url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
-                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                                for config in configs:
-                                    if config[0]:
-                                        resp += config[0]+"\n"
-                                    elif config[1]:
-                                        resp += config[1]+"\n"
-                                    elif config[2]:
-                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                        if trojan_sni:
-                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                                continue
-                                        resp += config[2]+"\n"
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                node_fake_config = trojan_urls[0]
+                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                resp += nodes_configs
                         except Exception as e:
                             logger.exception(f"Error in loading {url} configs {e}")
                 configs = [line for line in resp.split('\n') if line.strip() != '']
@@ -386,27 +346,18 @@ class UserView(FlaskView):
                 logger.exception(f"Error in loading nodes.json {e}")
             
             if urls:
-                resp += "\n"
                 for url in urls:
+                    resp += "\n"
                     try:
-                        # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                        # PANEL_DIR = urlparse(url).path.split('/')
-                        # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                         url_sub = f"{url}/{g.account.uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
-                            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                            for config in configs:
-                                if config[0]:
-                                    resp += config[0]+"\n"
-                                elif config[1]:
-                                    resp += config[1]+"\n"
-                                elif config[2]:
-                                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                    if trojan_sni:
-                                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                            continue
-                                    resp += config[2]+"\n"
+                            nodes_configs = req.text
+                            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                            trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                            node_fake_config = trojan_urls[0]
+                            nodes_configs = nodes_configs.replace(node_fake_config, "")
+                            resp += nodes_configs
                     except Exception as e:
                         logger.exception(f"Error in loading {url} configs {e}")
         if base64:
@@ -461,49 +412,26 @@ class UserView(FlaskView):
         if request.method == 'HEAD':
             resp = ""
         else:
+            # render_template('all_configs.txt', **c, base64=hutils.encode.do_base_64)
             resp = hutils.proxy.xray.make_v2ray_configs(c['domains'], c['user'], c['expire_days'], c['ip_debug'])
         if username:
-            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
-            for config in configs:
-                if config[2]:
-                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                    if trojan_sni:
-                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                            # if hconfig(ConfigEnum.lang) == 'fa':
-                            #     encoded_name = f" کاربر:{c['user'].name}"
-                            # else:
-                            #     encoded_name = f" 👤:{c['user'].name}"
-                            encoded_name = f" 👤:{c['user'].name}"
-                            add_name = config[2] + encoded_name
-                            resp = resp.replace(config[2], add_name)
-        # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
-        # if match:
-        #     # Add encoded_name after #
-           
-        #     # Wrap the user name in Unicode control characters to specify left-to-right display
-        #     # user_name = '\u202A' + user_name + '\u202C'
-        #     # encoded_name = hiddify.url_encode(user_name)
-        #     # encoded_name = hiddify.url_encode(f"👤User:{c['user'].name} ")
-        #     resp = resp[:match.end()] + encoded_name + resp[match.end():]
+            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*[^\n]'
+            trojan_urls = re.findall(trojan_pattern, resp)
+            fake_config = trojan_urls[0]
+            encoded_name = f" 👤:{c['user'].name}"
+            new_fake_config = fake_config + encoded_name
+            resp = resp.replace(fake_config, new_fake_config)
         if randomize:
             if randomize_mode == "servers":
                 fake_config = ""
                 configs_list = []
-                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
-                real_configs = ""
-                for config in configs:
-                    if config[0]:
-                        real_configs += config[0]+"\n"
-                    elif config[1]:
-                        real_configs += config[1]+"\n"
-                    elif config[2]:
-                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                        if trojan_sni:
-                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                fake_config += config[2]+"\n"
-                                continue
-                        real_configs += config[2]+"\n"
-                configs_list.append(real_configs)
+                # configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)|tuic:\/\/[^\n]+)|(hysteria2:\/\/[^\n]+)|(hysteria:\/\/[^\n]+)', resp)
+                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                trojan_urls = re.findall(trojan_pattern, resp)
+                fake_config += trojan_urls[0] + "\n"
+                resp = resp.replace(url, "")
+                configs_list.append(resp)
+                # configs_list = resp.split("\n")
                 try:
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
@@ -513,26 +441,17 @@ class UserView(FlaskView):
                 if urls:
                     for url in urls:
                         try:
-                            real_configs = ""
-                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            # PANEL_DIR = urlparse(url).path.split('/')
-                            # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                             url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
-                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                                for config in configs:
-                                    if config[0]:
-                                        real_configs += config[0]+"\n"
-                                    elif config[1]:
-                                        real_configs += config[1]+"\n"
-                                    elif config[2]:
-                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                        if trojan_sni:
-                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                                continue
-                                        real_configs += config[2]+"\n"
-                                configs_list.append(real_configs)
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                node_fake_config = trojan_urls[0]
+                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                # configs_list.append("\n")
+                                configs_list.append(nodes_configs)
+                                # configs_list += nodes_configs.split("\n")
                         except Exception as e:
                             logger.exception(f"Error in loading {url} configs {e}")
                 if configs_list:
@@ -546,27 +465,18 @@ class UserView(FlaskView):
                     logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
-                    resp += "\n"
                     for url in urls:
+                        resp += "\n"
                         try:
-                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            # PANEL_DIR = urlparse(url).path.split('/')
-                            # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                             url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
-                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                                for config in configs:
-                                    if config[0]:
-                                        resp += config[0]+"\n"
-                                    elif config[1]:
-                                        resp += config[1]+"\n"
-                                    elif config[2]:
-                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                        if trojan_sni:
-                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                                continue
-                                        resp += config[2]+"\n"
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                node_fake_config = trojan_urls[0]
+                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                resp += nodes_configs
                         except Exception as e:
                             logger.exception(f"Error in loading {url} configs {e}")
                 configs = [line for line in resp.split('\n') if line.strip() != '']
@@ -584,31 +494,20 @@ class UserView(FlaskView):
                 logger.exception(f"Error in loading nodes.json {e}")
             
             if urls:
-                resp += "\n"
                 for url in urls:
+                    resp += "\n"
                     try:
-                        # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                        # PANEL_DIR = urlparse(url).path.split('/')
-                        # url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
                         url_sub = f"{url}/{g.account.uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
-                            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                            for config in configs:
-                                if config[0]:
-                                    resp += config[0]+"\n"
-                                elif config[1]:
-                                    resp += config[1]+"\n"
-                                elif config[2]:
-                                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                    if trojan_sni:
-                                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                            continue
-                                    resp += config[2]+"\n"
+                            nodes_configs = req.text
+                            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                            trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                            node_fake_config = trojan_urls[0]
+                            nodes_configs = nodes_configs.replace(node_fake_config, "")
+                            resp += nodes_configs
                     except Exception as e:
                         logger.exception(f"Error in loading {url} configs {e}")
-        # if limit:
-
         if base64:
             resp = hutils.encode.do_base_64(resp)
         return add_headers(resp, c)
