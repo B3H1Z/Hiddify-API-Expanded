@@ -269,10 +269,11 @@ class UserView(FlaskView):
             # شامل اینتر اخر نمیشود
             trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*[^\n]'
             trojan_urls = re.findall(trojan_pattern, resp)
-            fake_config = trojan_urls[0]
-            encoded_name = f" 👤:{c['user'].name}"
-            new_fake_config = fake_config + encoded_name
-            resp = resp.replace(fake_config, new_fake_config)
+            if trojan_urls:
+                fake_config = trojan_urls[0]
+                encoded_name = f" 👤:{c['user'].name}"
+                new_fake_config = fake_config + encoded_name
+                resp = resp.replace(fake_config, new_fake_config)
         if randomize:
             if randomize_mode == "servers":
                 configs_list = []
@@ -280,9 +281,10 @@ class UserView(FlaskView):
                 #شامل اینتر اخر می شود
                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                 trojan_urls = re.findall(trojan_pattern, resp)
-                fake_config = trojan_urls[0] 
-                resp = resp.replace(fake_config, "")
-                configs_list.append(resp)
+                if trojan_urls:
+                    fake_config = trojan_urls[0] 
+                    resp = resp.replace(fake_config, "")
+                    configs_list.append(resp)
                 # configs_list = resp.split("\n")
                 try:
                     with open("nodes.json", 'r') as f:
@@ -299,8 +301,9 @@ class UserView(FlaskView):
                                 nodes_configs = req.text
                                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                                 trojan_urls = re.findall(trojan_pattern, nodes_configs)
-                                node_fake_config = trojan_urls[0]
-                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
                                 # configs_list.append("\n")
                                 configs_list.append(nodes_configs)
                                 # configs_list += nodes_configs.split("\n")
@@ -326,8 +329,9 @@ class UserView(FlaskView):
                                 nodes_configs = req.text
                                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                                 trojan_urls = re.findall(trojan_pattern, nodes_configs)
-                                node_fake_config = trojan_urls[0]
-                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
                                 resp += nodes_configs
                         except Exception as e:
                             logger.exception(f"Error in loading {url} configs {e}")
@@ -355,8 +359,9 @@ class UserView(FlaskView):
                             nodes_configs = req.text
                             trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                             trojan_urls = re.findall(trojan_pattern, nodes_configs)
-                            node_fake_config = trojan_urls[0]
-                            nodes_configs = nodes_configs.replace(node_fake_config, "")
+                            if trojan_urls:
+                                node_fake_config = trojan_urls[0]
+                                nodes_configs = nodes_configs.replace(node_fake_config, "")
                             resp += nodes_configs
                     except Exception as e:
                         logger.exception(f"Error in loading {url} configs {e}")
@@ -417,10 +422,11 @@ class UserView(FlaskView):
         if username:
             trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*[^\n]'
             trojan_urls = re.findall(trojan_pattern, resp)
-            fake_config = trojan_urls[0]
-            encoded_name = f" 👤:{c['user'].name}"
-            new_fake_config = fake_config + encoded_name
-            resp = resp.replace(fake_config, new_fake_config)
+            if trojan_urls:
+                fake_config = trojan_urls[0]
+                encoded_name = f" 👤:{c['user'].name}"
+                new_fake_config = fake_config + encoded_name
+                resp = resp.replace(fake_config, new_fake_config)
         if randomize:
             if randomize_mode == "servers":
                 fake_config = ""
@@ -428,8 +434,9 @@ class UserView(FlaskView):
                 # configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)|tuic:\/\/[^\n]+)|(hysteria2:\/\/[^\n]+)|(hysteria:\/\/[^\n]+)', resp)
                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                 trojan_urls = re.findall(trojan_pattern, resp)
-                fake_config += trojan_urls[0] + "\n"
-                resp = resp.replace(url, "")
+                if trojan_urls:
+                    fake_config += trojan_urls[0] + "\n"
+                    resp = resp.replace(url, "")
                 configs_list.append(resp)
                 # configs_list = resp.split("\n")
                 try:
@@ -447,8 +454,9 @@ class UserView(FlaskView):
                                 nodes_configs = req.text
                                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                                 trojan_urls = re.findall(trojan_pattern, nodes_configs)
-                                node_fake_config = trojan_urls[0]
-                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
                                 # configs_list.append("\n")
                                 configs_list.append(nodes_configs)
                                 # configs_list += nodes_configs.split("\n")
@@ -474,8 +482,9 @@ class UserView(FlaskView):
                                 nodes_configs = req.text
                                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                                 trojan_urls = re.findall(trojan_pattern, nodes_configs)
-                                node_fake_config = trojan_urls[0]
-                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
                                 resp += nodes_configs
                         except Exception as e:
                             logger.exception(f"Error in loading {url} configs {e}")
@@ -503,8 +512,9 @@ class UserView(FlaskView):
                             nodes_configs = req.text
                             trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                             trojan_urls = re.findall(trojan_pattern, nodes_configs)
-                            node_fake_config = trojan_urls[0]
-                            nodes_configs = nodes_configs.replace(node_fake_config, "")
+                            if trojan_urls:
+                                node_fake_config = trojan_urls[0]
+                                nodes_configs = nodes_configs.replace(node_fake_config, "")
                             resp += nodes_configs
                     except Exception as e:
                         logger.exception(f"Error in loading {url} configs {e}")
