@@ -286,7 +286,7 @@ class UserView(FlaskView):
                     fake_config = trojan_urls[0] 
                     resp = resp.replace(fake_config, "")
                     fake_config += '\n'
-                    configs_list.append(resp)
+                configs_list.append(resp)
                 # configs_list = resp.split("\n")
                 try:
                     with open("nodes.json", 'r') as f:
