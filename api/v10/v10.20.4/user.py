@@ -241,6 +241,7 @@ class UserView(FlaskView):
         username = False
         randomize = False
         randomize_mode = "servers"
+        fake_config = None
         try:
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
@@ -311,7 +312,10 @@ class UserView(FlaskView):
                             logger.exception(f"Error in loading {url} configs {e}")
                 if configs_list:
                     random.shuffle(configs_list)
-                    resp = fake_config + '\n'.join(configs_list)
+                    if fake_config:
+                        resp = fake_config + '\n'.join(configs_list)
+                    else:
+                        resp = "".join(configs_list)
             elif randomize_mode == "configs":
                 try:
                     with open("nodes.json", 'r') as f:
@@ -395,6 +399,7 @@ class UserView(FlaskView):
         username = False
         randomize = False
         randomize_mode = "servers"
+        fake_config = None
         try:
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
@@ -464,7 +469,10 @@ class UserView(FlaskView):
                             logger.exception(f"Error in loading {url} configs {e}")
                 if configs_list:
                     random.shuffle(configs_list)
-                    resp = fake_config + '\n'.join(configs_list)
+                    if fake_config:
+                        resp = fake_config + '\n'.join(configs_list)
+                    else:
+                        resp = "".join(configs_list)
             elif randomize_mode == "configs":
                 try:
                     with open("nodes.json", 'r') as f:
