@@ -241,7 +241,6 @@ class UserView(FlaskView):
         username = False
         randomize = False
         randomize_mode = "servers"
-        fake_config = None
         try:
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
@@ -277,6 +276,7 @@ class UserView(FlaskView):
                 resp = resp.replace(fake_config, new_fake_config)
         if randomize:
             if randomize_mode == "servers":
+                fake_config = ""
                 configs_list = []
                 # configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)|tuic:\/\/[^\n]+)|(hysteria2:\/\/[^\n]+)|(hysteria:\/\/[^\n]+)', resp)
                 #شامل اینتر اخر می شود
@@ -285,6 +285,7 @@ class UserView(FlaskView):
                 if trojan_urls:
                     fake_config = trojan_urls[0] 
                     resp = resp.replace(fake_config, "")
+                    fake_config += '\n'
                     configs_list.append(resp)
                 # configs_list = resp.split("\n")
                 try:
@@ -312,10 +313,7 @@ class UserView(FlaskView):
                             logger.exception(f"Error in loading {url} configs {e}")
                 if configs_list:
                     random.shuffle(configs_list)
-                    if fake_config:
-                        resp = fake_config + '\n'.join(configs_list)
-                    else:
-                        resp = "".join(configs_list)
+                    resp = fake_config + '\n'.join(configs_list)
             elif randomize_mode == "configs":
                 try:
                     with open("nodes.json", 'r') as f:
@@ -399,7 +397,6 @@ class UserView(FlaskView):
         username = False
         randomize = False
         randomize_mode = "servers"
-        fake_config = None
         try:
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
@@ -425,6 +422,7 @@ class UserView(FlaskView):
             # render_template('all_configs.txt', **c, base64=hutils.encode.do_base_64)
             resp = hutils.proxy.xray.make_v2ray_configs(c['domains'], c['user'], c['expire_days'], c['ip_debug'])
         if username:
+            # شامل اینتر اخر نمیشود
             trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*[^\n]'
             trojan_urls = re.findall(trojan_pattern, resp)
             if trojan_urls:
@@ -437,12 +435,14 @@ class UserView(FlaskView):
                 fake_config = ""
                 configs_list = []
                 # configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)|tuic:\/\/[^\n]+)|(hysteria2:\/\/[^\n]+)|(hysteria:\/\/[^\n]+)', resp)
+                #شامل اینتر اخر می شود
                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                 trojan_urls = re.findall(trojan_pattern, resp)
                 if trojan_urls:
-                    fake_config += trojan_urls[0] + "\n"
-                    resp = resp.replace(url, "")
-                configs_list.append(resp)
+                    fake_config = trojan_urls[0] 
+                    resp = resp.replace(fake_config, "")
+                    fake_config += '\n'
+                    configs_list.append(resp)
                 # configs_list = resp.split("\n")
                 try:
                     with open("nodes.json", 'r') as f:
@@ -469,10 +469,7 @@ class UserView(FlaskView):
                             logger.exception(f"Error in loading {url} configs {e}")
                 if configs_list:
                     random.shuffle(configs_list)
-                    if fake_config:
-                        resp = fake_config + '\n'.join(configs_list)
-                    else:
-                        resp = "".join(configs_list)
+                    resp = fake_config + '\n'.join(configs_list)
             elif randomize_mode == "configs":
                 try:
                     with open("nodes.json", 'r') as f:
