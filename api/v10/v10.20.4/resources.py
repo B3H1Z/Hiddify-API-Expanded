@@ -104,15 +104,25 @@ class bulkUsers(Resource):
     #     return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
         
     def post(self):
+
+        lock_file_path = '/log/update_usage.lock'
+        while os.path.isfile(lock_file_path):
+            time.sleep(10)
+
+        with open(lock_file_path, 'w') as lock_file:
+            lock_file.write(str(int(time.time())))
+            
         update = request.args.get('update') or False
         users = request.json
         if update:
             try:
                 bulk_update_users(users)
                 hiddify.quick_apply_users()
+                remove_lock(lock_file_path)
                 return jsonify({'status': 200, 'msg': 'All users  updated by new method successfully'})
             except Exception as e:
                 logger.exception(f"Error in post bulk users for update {e}")
+                remove_lock(lock_file_path)
                 return jsonify({'status': 250, 'msg': f"error{e}"})
         else:
             User.bulk_register(users)
@@ -120,7 +130,7 @@ class bulkUsers(Resource):
                 user = User.by_uuid(newuser['uuid']) or abort(202, f"cant find user{newuser['uuid']}")
                 user_driver.add_client(user)
             hiddify.quick_apply_users()
-
+            remove_lock(lock_file_path)
             return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
     
     def delete(self):
@@ -317,3 +327,9 @@ def bulk_delete_users(users=[], commit=True):
         db.session.delete(user)
         user_driver.remove_client(user)
     db.session.commit()
+
+def remove_lock(lock_file_path):
+    try:
+        os.remove(lock_file_path)
+    except FileNotFoundError:
+        pass
