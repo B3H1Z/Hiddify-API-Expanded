@@ -70,8 +70,29 @@ class UserView(FlaskView):
     @route("/xray")
     @login_required(roles={Role.user})
     def xray(self):
+        urls = None
         c = get_common_data(g.account.uuid, mode="new")
         configs = hutils.proxy.xrayjson.configs_as_json(c['domains'], c['user'], c['expire_days'], c['profile_title'])
+        try:
+            with open("nodes.json", 'r') as f:
+                urls = json.load(f)
+        except Exception as e:
+            logger.exception(f"Error in loading nodes.json {e}")
+        
+        if urls:
+            configs_list = json.loads(configs)
+            for url in urls:
+                try:
+                    url_sub = f"{url}/{g.account.uuid}/xray/"
+                    req = requests.get(url_sub,timeout=10)
+                    if req.status_code == 200:
+                        nodes_configs = req.text
+                        node_configs_list = json.loads(nodes_configs)
+                        if node_configs_list:
+                            configs_list.extend(node_configs_list)
+                except Exception as e:
+                    logger.exception(f"Error in loading {url} configs {e}")
+            configs = json.dumps(configs_list, indent=2, cls=hutils.proxy.ProxyJsonEncoder)
         return add_headers(configs, c, 'application/json')
 
     @route("/singbox/")

@@ -107,11 +107,11 @@ class bulkUsers(Resource):
 
         lock_file_path = '/log/update_usage.lock'
         while os.path.isfile(lock_file_path):
-            time.sleep(10)
+            time.sleep(5)
 
         with open(lock_file_path, 'w') as lock_file:
             lock_file.write(str(int(time.time())))
-            
+        
         update = request.args.get('update') or False
         users = request.json
         if update:
