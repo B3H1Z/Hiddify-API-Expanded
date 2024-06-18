@@ -107,7 +107,7 @@ class bulkUsers(Resource):
 
         lock_file_path = '/log/update_usage.lock'
         while os.path.isfile(lock_file_path):
-            time.sleep(5)
+            time.sleep(1)
 
         with open(lock_file_path, 'w') as lock_file:
             lock_file.write(str(int(time.time())))
