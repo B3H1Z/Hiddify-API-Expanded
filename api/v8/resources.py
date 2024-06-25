@@ -80,34 +80,60 @@ class bulkUsers(Resource):
     #     return jsonify({'status': 200, 'msg': 'Hello Hidi-bot'})
         
     def post(self):
+        start_time = time.time()
+        try:
+            log_dir = '/opt/hiddify-manager/log'
+            lock_file_path = os.path.join(log_dir, 'update_usage.lock')
+            # lock_file_path = '~/log/update_usage.lock'
+            while os.path.isfile(lock_file_path):
+                time.sleep(1)
 
-        lock_file_path = '/log/update_usage.lock'
-        while os.path.isfile(lock_file_path):
-            time.sleep(1)
+            with open(lock_file_path, 'w') as lock_file:
+                lock_file.write(str(int(time.time())))
+        except Exception as e:
+            return jsonify({'status': 250, 'msg': f"error{e}"})
 
-        with open(lock_file_path, 'w') as lock_file:
-            lock_file.write(str(int(time.time())))
+        
 
 
         update = request.args.get('update') or False
         users = request.json
         if update:
             try:
+                update_start_time = time.time()
                 bulk_update_users(users)
                 hiddify.quick_apply_users()
+
+                update_end_time = time.time()
+                total_time = update_end_time - start_time
+                update_duration = update_end_time - update_start_time
+
                 remove_lock(lock_file_path)
-                return jsonify({'status': 200, 'msg': 'All users  updated by new method successfully'})
+                return jsonify({
+                    'status': 200, 
+                    'msg': f'All users updated by new method successfully. Total duration: {total_time:.2f} seconds, Update duration: {update_duration:.2f} seconds'
+                })
             except Exception as e:
                 remove_lock(lock_file_path)
                 return jsonify({'status': 250, 'msg': f"error{e}"})
         else:
+            process_start_time = time.time()
+
             hiddify.bulk_register_users(users)
             for newuser in users:
                 user = user_by_uuid(newuser['uuid']) or abort(202, f"cant find user{newuser['uuid']}")
                 user_driver.add_client(user)
             hiddify.quick_apply_users()
+            
+            process_end_time = time.time()
+            total_time = process_end_time - start_time
+            process_duration = process_end_time - process_start_time
+
             remove_lock(lock_file_path)
-            return jsonify({'status': 200, 'msg': 'All users  updated successfully'})
+            return jsonify({
+                    'status': 200, 
+                    'msg': f'All users updated successfully. Total duration: {total_time:.2f} seconds, Process duration: {process_duration:.2f} seconds'
+                })
     
     def delete(self):
         try:
@@ -292,12 +318,15 @@ def bulk_update_users(users=[]):
     db.session.commit()
 
 def bot_update_user(**user):
-    # if not is_valid():return
-    dbuser = User.query.filter_by(uuid=user['uuid']).first()
-    if user.get('start_date', ''):
-        dbuser.start_date = hiddify.json_to_date(user['start_date'])
-    dbuser.current_usage_GB = user['current_usage_GB']
-    dbuser.last_online = hiddify.json_to_time(user.get('last_online')) or datetime.datetime.min
+    try:
+        dbuser = User.query.filter_by(uuid=user['uuid']).first()
+        if user.get('start_date', ''):
+            dbuser.start_date = hiddify.json_to_date(user['start_date'])
+        dbuser.current_usage_GB = user['current_usage_GB']
+        dbuser.last_online = hiddify.json_to_time(user.get('last_online')) or datetime.datetime.min
+    except Exception as e:
+            pass
+    
 
 def bulk_delete_users(users=[], commit=True):
     for u in users:

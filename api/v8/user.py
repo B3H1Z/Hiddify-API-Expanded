@@ -286,25 +286,18 @@ class UserView(FlaskView):
                 if urls:
                     for url in urls:
                         try:
-                            real_configs = ""
-                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
-                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                                for config in configs:
-                                    if config[0]:
-                                        real_configs += config[0]+"\n"
-                                    elif config[1]:
-                                        real_configs += config[1]+"\n"
-                                    elif config[2]:
-                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                        if trojan_sni:
-                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                                continue
-                                        real_configs += config[2]+"\n"
-                                configs_list.append(real_configs)
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                # configs_list.append("\n")
+                                configs_list.append(nodes_configs)
+                                # configs_list += nodes_configs.split("\n")
                         except Exception as e:
                             pass
                 if configs_list:
@@ -321,23 +314,16 @@ class UserView(FlaskView):
                     resp += "\n"
                     for url in urls:
                         try:
-                            BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                            PANEL_DIR = urlparse(url).path.split('/')
-                            url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
-                                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                                for config in configs:
-                                    if config[0]:
-                                        resp += config[0]+"\n"
-                                    elif config[1]:
-                                        resp += config[1]+"\n"
-                                    elif config[2]:
-                                        trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                        if trojan_sni:
-                                            if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                                continue
-                                        resp += config[2]+"\n"
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                resp += nodes_configs
                         except Exception as e:
                             pass
                 configs = [line for line in resp.split('\n') if line.strip() != '']
@@ -358,23 +344,16 @@ class UserView(FlaskView):
                 resp += "\n"
                 for url in urls:
                     try:
-                        BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
-                        PANEL_DIR = urlparse(url).path.split('/')
-                        url_sub = f"{BASE_URL}/{PANEL_DIR[1]}/{g.user_uuid}/all2.txt"
+                        url_sub = f"{url}/{g.account.uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
-                            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', req.text)
-                            for config in configs:
-                                if config[0]:
-                                    resp += config[0]+"\n"
-                                elif config[1]:
-                                    resp += config[1]+"\n"
-                                elif config[2]:
-                                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                                    if trojan_sni:
-                                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                            continue
-                                    resp += config[2]+"\n"
+                            nodes_configs = req.text
+                            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                            trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                            if trojan_urls:
+                                node_fake_config = trojan_urls[0]
+                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                            resp += nodes_configs
                     except Exception as e:
                         pass
         # if limit:
