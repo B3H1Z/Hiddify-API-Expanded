@@ -1,9 +1,6 @@
 #!/bin/bash
 # replace __init__.py and resources.py in hiddifypanel/panel/commercial/restapi with the ones in this folder
 
-#cloning repo
-
-
 # Define text colors
 GREEN='\033[0;32m'
 RED='\033[0;31m'
@@ -16,6 +13,7 @@ user_location="hiddifypanel/panel/user"
 script_location="/usr/local/bin/hiddify-api-expanded"
 base_location="/opt/Hiddify-API-Expanded" 
 base_location_api="/opt/Hiddify-API-Expanded/api" 
+
 # Function to display error messages and exit
 function display_error_and_exit() {
   echo -e "${RED}Error: $1${RESET}"
@@ -47,6 +45,10 @@ sudo rm -rf /usr/lib/python3/dist-packages/OpenSSL
 sudo pip3 install pyopenssl
 sudo pip3 install pyopenssl --upgrade
 
+# اضافه کردن دستور تغییر مجوز‌ها
+echo "Setting permissions for /opt/hiddify-manager/log/"
+sudo chmod -R 777 /opt/hiddify-manager/log/
+
 echo "Cloning repo"
 repository_url="https://github.com/B3H1Z/Hiddify-API-Expanded.git"
 install_dir="/opt/Hiddify-API-Expanded"
@@ -56,8 +58,6 @@ if [ -d "$install_dir" ]; then
 fi
 git clone "$repository_url" "$install_dir" || display_error_and_exit "Failed to clone the repository."
 cd "$install_dir" || display_error_and_exit "Failed to change directory."
-
-
 
 if command -v pip3 &> /dev/null; then
     version=$(pip3 show hiddifypanel | grep -oP 'Version: \K.*')
@@ -108,10 +108,16 @@ if command -v pip3 &> /dev/null; then
         pip_location_1="$pip_location_1/v1"
     # if minor version is 10.20
     elif [ "$major_version" -eq 10 ] && [ "$minor_version" -eq 20 ]; then
-    echo "HiddifyPanel version is 10.20"
-    base_location_api="$base_location_api/v10/v10.20.4"
-    pip_location_1="$pip_location_1/v1"
+        echo "HiddifyPanel version is 10.20"
+        base_location_api="$base_location_api/v10/v10.20.4"
+        pip_location_1="$pip_location_1/v1"
+    # if minor version is 10.30
+    elif [ "$major_version" -eq 10 ] && [ "$minor_version" -eq 30 ]; then
+        echo "HiddifyPanel version is 10.30"
+        base_location_api="$base_location_api/v10/v10.30.4"
+        pip_location_1="$pip_location_1/v1"
     fi
+
 
     echo "Replacing files"
     cp "$base_location_api/__init__.py" "$pip_location_1/__init__.py"
@@ -125,7 +131,6 @@ if command -v pip3 &> /dev/null; then
     echo "Adding cron job"
     add_cron_job_if_not_exists "*/5 * * * * cd $script_location && python3 update.py"
 
-
     echo "Restarting HiddifyPanel"
     systemctl restart hiddify-panel
     #remove cache
@@ -133,10 +138,6 @@ if command -v pip3 &> /dev/null; then
     rm -rf /opt/Hiddify-API-Expanded
     echo -e "${GREEN}Hiddify API Expanded successfully installed.${RESET}"
     
-    
 else
     display_error_and_exit "pip3 is not installed. Please install pip3 and try again."
 fi
-
-
-
