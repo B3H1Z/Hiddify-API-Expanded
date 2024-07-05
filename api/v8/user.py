@@ -19,7 +19,16 @@ import requests
 import json
 import random
 
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
+
+file_handler = logging.FileHandler('api-expanded.log')
+formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
 class UserView(FlaskView):
 
     @route('/short/')
@@ -216,7 +225,7 @@ class UserView(FlaskView):
             with open("hidybotconfigs.json", 'r') as f:
                 bot_configs = json.load(f)
         except Exception as e:
-            pass
+            logger.exception(f"Error in loading hidybotconfigs.json {e}")
         if bot_configs:
             username = bot_configs.get("username", False)
             randomize = bot_configs.get("randomize", False)
@@ -252,7 +261,7 @@ class UserView(FlaskView):
         # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
         # if match:
         #     # Add encoded_name after #
-           
+        
         #     # Wrap the user name in Unicode control characters to specify left-to-right display
         #     # user_name = '\u202A' + user_name + '\u202C'
         #     # encoded_name = hiddify.url_encode(user_name)
@@ -281,15 +290,16 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
                     for url in urls:
                         try:
-                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 nodes_configs = req.text
+                                # logger.info(req.text)
                                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                                 trojan_urls = re.findall(trojan_pattern, nodes_configs)
                                 if trojan_urls:
@@ -299,7 +309,7 @@ class UserView(FlaskView):
                                 configs_list.append(nodes_configs)
                                 # configs_list += nodes_configs.split("\n")
                         except Exception as e:
-                            pass
+                            logger.exception(f"Error in loading {url} configs {e}")
                 if configs_list:
                     random.shuffle(configs_list)
                     resp = fake_config + '\n'.join(configs_list)
@@ -308,13 +318,13 @@ class UserView(FlaskView):
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
+                    logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
                     resp += "\n"
                     for url in urls:
                         try:
-                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 nodes_configs = req.text
@@ -325,7 +335,7 @@ class UserView(FlaskView):
                                     nodes_configs = nodes_configs.replace(node_fake_config, "")
                                 resp += nodes_configs
                         except Exception as e:
-                            pass
+                            logger.exception(f"Error in loading {url} configs {e}")
                 configs = [line for line in resp.split('\n') if line.strip() != '']
                 if len(configs) > 2:
                     first_configs = configs[0:1]
@@ -338,16 +348,17 @@ class UserView(FlaskView):
                 with open("nodes.json", 'r') as f:
                     urls = json.load(f)
             except Exception as e:
-                pass
+                logger.exception(f"Error in loading nodes.json {e}")
             
             if urls:
                 resp += "\n"
                 for url in urls:
                     try:
-                        url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                        url_sub = f"{url}/{g.user_uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
                             nodes_configs = req.text
+                            # logger.info(req.text)
                             trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                             trojan_urls = re.findall(trojan_pattern, nodes_configs)
                             if trojan_urls:
@@ -355,7 +366,7 @@ class UserView(FlaskView):
                                 nodes_configs = nodes_configs.replace(node_fake_config, "")
                             resp += nodes_configs
                     except Exception as e:
-                        pass
+                        logger.exception(f"Error in loading {url} configs {e}")
         # if limit:
 
         if base64:
