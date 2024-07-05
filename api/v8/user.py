@@ -299,7 +299,7 @@ class UserView(FlaskView):
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 nodes_configs = req.text
-                                logger.info(req.text)
+                                # logger.info(req.text)
                                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                                 trojan_urls = re.findall(trojan_pattern, nodes_configs)
                                 if trojan_urls:
