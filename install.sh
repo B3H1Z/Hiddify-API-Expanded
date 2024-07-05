@@ -115,7 +115,7 @@ if command -v pip3 &> /dev/null; then
     # if minor version is 10.30
     elif [ "$major_version" -eq 10 ] && [ "$minor_version" -eq 30 ]; then
         echo "HiddifyPanel version is 10.30"
-        base_location_api="$base_location_api/v10/v10.30.4"
+        base_location_api="$base_location_api/v10/v10.30.5"
         pip_location_1="$pip_location_1/v1"
     fi
 
