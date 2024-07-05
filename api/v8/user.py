@@ -321,9 +321,10 @@ class UserView(FlaskView):
                     logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
-                    resp += "\n"
+                    # resp += "\n"
                     for url in urls:
                         try:
+                            resp += "\n"
                             url_sub = f"{url}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
@@ -351,9 +352,10 @@ class UserView(FlaskView):
                 logger.exception(f"Error in loading nodes.json {e}")
             
             if urls:
-                resp += "\n"
+                # resp += "\n"
                 for url in urls:
                     try:
+                        resp += "\n"
                         url_sub = f"{url}/{g.user_uuid}/all2.txt"
                         req = requests.get(url_sub,timeout=10)
                         if req.status_code == 200:
