@@ -60,14 +60,15 @@ git clone "$repository_url" "$install_dir" || display_error_and_exit "Failed to 
 cd "$install_dir" || display_error_and_exit "Failed to change directory."
 
 if command -v pip3 &> /dev/null; then
-    version=$(pip3 show hiddifypanel | grep -oP 'Version: \K.*')
+    source /opt/hiddify-manager/common/utils.sh
+    version=$(get_installed_panel_version)
     # check is it run successfully
     if [ $? -eq 0 ]; then
         echo "HiddifyPanel version is found"
     else
         display_error_and_exit "HiddifyPanel is not installed. Please install HiddifyPanel and try again."
     fi
-    pip_location=$(pip3 show hiddifypanel | grep -oP 'Location: \K.*')
+    pip_location=$(hiddifypanel_path)
     if [ $? -eq 0 ]; then
         echo "HiddifyPanel location is found"
     else
