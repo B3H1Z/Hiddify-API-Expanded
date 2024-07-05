@@ -8,8 +8,8 @@ YELLOW='\033[1;33m'
 RESET='\033[0m' # Reset text color
 
 HIDY_BOT_ID="@HidyBotGroup"
-api_location="hiddifypanel/panel/commercial/restapi"
-user_location="hiddifypanel/panel/user"
+api_location="panel/commercial/restapi"
+user_location="panel/user"
 script_location="/usr/local/bin/hiddify-api-expanded"
 base_location="/opt/Hiddify-API-Expanded" 
 base_location_api="/opt/Hiddify-API-Expanded/api" 
