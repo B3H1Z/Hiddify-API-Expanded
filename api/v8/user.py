@@ -19,7 +19,16 @@ import requests
 import json
 import random
 
+import logging
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
+
+file_handler = logging.FileHandler('api-expanded.log')
+formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
 class UserView(FlaskView):
 
     @route('/short/')
@@ -206,118 +215,151 @@ class UserView(FlaskView):
 
     @ route('/all.txt', methods=["GET", "HEAD"])
     def all_configs(self, base64=False):
-        mode = "new"  # request.args.get("mode")
-        base64 = base64 or request.args.get("base64", "").lower() == "true"
-        bot_configs = None
-        username = False
-        randomize = False
-        randomize_mode = "servers"
         try:
-            with open("hidybotconfigs.json", 'r') as f:
-                bot_configs = json.load(f)
-        except Exception as e:
-            pass
-        if bot_configs:
-            username = bot_configs.get("username", False)
-            randomize = bot_configs.get("randomize", False)
-            randomize_mode = bot_configs.get("randomize_mode", "servers")
-            # limit = limit or request.args.get("limit", "")
-            # if limit:
-            #     try:
-            #         limit = int(limit)
-            #     except Exception as e:
-            #         limit = None
-        c = get_common_data(g.user_uuid, mode)
-        # response.content_type = 'text/plain';
-        urls = None
-        resp = None
-        if request.method == 'HEAD':
-            resp = ""
-        else:
-            resp = link_maker.make_v2ray_configs(**c)
-        if username:
-            configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
-            for config in configs:
-                if config[2]:
-                    trojan_sni = re.search(r'sni=([^&]+)', config[2])
-                    if trojan_sni:
-                        if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                            # if hconfig(ConfigEnum.lang) == 'fa':
-                            #     encoded_name = f" کاربر:{c['user'].name}"
-                            # else:
-                            #     encoded_name = f" 👤:{c['user'].name}"
-                            encoded_name = f" 👤:{c['user'].name}"
-                            add_name = config[2] + encoded_name
-                            resp = resp.replace(config[2], add_name)
-        # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
-        # if match:
-        #     # Add encoded_name after #
-           
-        #     # Wrap the user name in Unicode control characters to specify left-to-right display
-        #     # user_name = '\u202A' + user_name + '\u202C'
-        #     # encoded_name = hiddify.url_encode(user_name)
-        #     # encoded_name = hiddify.url_encode(f"👤User:{c['user'].name} ")
-        #     resp = resp[:match.end()] + encoded_name + resp[match.end():]
-        if randomize:
-            if randomize_mode == "servers":
-                fake_config = ""
-                configs_list = []
+            mode = "new"  # request.args.get("mode")
+            base64 = base64 or request.args.get("base64", "").lower() == "true"
+            bot_configs = None
+            username = False
+            randomize = False
+            randomize_mode = "servers"
+            try:
+                with open("hidybotconfigs.json", 'r') as f:
+                    bot_configs = json.load(f)
+            except Exception as e:
+                logger.exception(f"Error in loading hidybotconfigs.json {e}")
+            if bot_configs:
+                username = bot_configs.get("username", False)
+                randomize = bot_configs.get("randomize", False)
+                randomize_mode = bot_configs.get("randomize_mode", "servers")
+                # limit = limit or request.args.get("limit", "")
+                # if limit:
+                #     try:
+                #         limit = int(limit)
+                #     except Exception as e:
+                #         limit = None
+            c = get_common_data(g.user_uuid, mode)
+            # response.content_type = 'text/plain';
+            urls = None
+            resp = None
+            if request.method == 'HEAD':
+                resp = ""
+            else:
+                resp = link_maker.make_v2ray_configs(**c)
+            if username:
                 configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
-                real_configs = ""
                 for config in configs:
-                    if config[0]:
-                        real_configs += config[0]+"\n"
-                    elif config[1]:
-                        real_configs += config[1]+"\n"
-                    elif config[2]:
+                    if config[2]:
                         trojan_sni = re.search(r'sni=([^&]+)', config[2])
                         if trojan_sni:
                             if trojan_sni.group(1) == "fake_ip_for_sub_link":
-                                fake_config += config[2]+"\n"
-                                continue
-                        real_configs += config[2]+"\n"
-                configs_list.append(real_configs)
+                                # if hconfig(ConfigEnum.lang) == 'fa':
+                                #     encoded_name = f" کاربر:{c['user'].name}"
+                                # else:
+                                #     encoded_name = f" 👤:{c['user'].name}"
+                                encoded_name = f" 👤:{c['user'].name}"
+                                add_name = config[2] + encoded_name
+                                resp = resp.replace(config[2], add_name)
+            # match = re.search(r'sni=fake_ip_for_sub_link&security=tls#', resp)
+            # if match:
+            #     # Add encoded_name after #
+            
+            #     # Wrap the user name in Unicode control characters to specify left-to-right display
+            #     # user_name = '\u202A' + user_name + '\u202C'
+            #     # encoded_name = hiddify.url_encode(user_name)
+            #     # encoded_name = hiddify.url_encode(f"👤User:{c['user'].name} ")
+            #     resp = resp[:match.end()] + encoded_name + resp[match.end():]
+            if randomize:
+                if randomize_mode == "servers":
+                    fake_config = ""
+                    configs_list = []
+                    configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
+                    real_configs = ""
+                    for config in configs:
+                        if config[0]:
+                            real_configs += config[0]+"\n"
+                        elif config[1]:
+                            real_configs += config[1]+"\n"
+                        elif config[2]:
+                            trojan_sni = re.search(r'sni=([^&]+)', config[2])
+                            if trojan_sni:
+                                if trojan_sni.group(1) == "fake_ip_for_sub_link":
+                                    fake_config += config[2]+"\n"
+                                    continue
+                            real_configs += config[2]+"\n"
+                    configs_list.append(real_configs)
+                    try:
+                        with open("nodes.json", 'r') as f:
+                            urls = json.load(f)
+                    except Exception as e:
+                        logger.exception(f"Error in loading nodes.json {e}")
+                    
+                    if urls:
+                        for url in urls:
+                            try:
+                                url_sub = f"{url}/{g.user_uuid}/all2.txt"
+                                req = requests.get(url_sub,timeout=10)
+                                if req.status_code == 200:
+                                    nodes_configs = req.text
+                                    logger.info(req.text)
+                                    trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                    trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                    if trojan_urls:
+                                        node_fake_config = trojan_urls[0]
+                                        nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                    # configs_list.append("\n")
+                                    configs_list.append(nodes_configs)
+                                    # configs_list += nodes_configs.split("\n")
+                            except Exception as e:
+                                logger.exception(f"Error in loading {url} configs {e}")
+                    if configs_list:
+                        random.shuffle(configs_list)
+                        resp = fake_config + '\n'.join(configs_list)
+                elif randomize_mode == "configs":
+                    try:
+                        with open("nodes.json", 'r') as f:
+                            urls = json.load(f)
+                    except Exception as e:
+                        logger.exception(f"Error in loading nodes.json {e}")
+                    
+                    if urls:
+                        resp += "\n"
+                        for url in urls:
+                            try:
+                                url_sub = f"{url}/{g.user_uuid}/all2.txt"
+                                req = requests.get(url_sub,timeout=10)
+                                if req.status_code == 200:
+                                    nodes_configs = req.text
+                                    trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                    trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                    if trojan_urls:
+                                        node_fake_config = trojan_urls[0]
+                                        nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                    resp += nodes_configs
+                            except Exception as e:
+                                logger.exception(f"Error in loading {url} configs {e}")
+                    configs = [line for line in resp.split('\n') if line.strip() != '']
+                    if len(configs) > 2:
+                        first_configs = configs[0:1]
+                        rest_configs = configs[1:]
+                        random.shuffle(rest_configs)
+                        configs = first_configs + rest_configs
+                    resp = '\n'.join(configs)
+            else:
                 try:
                     with open("nodes.json", 'r') as f:
                         urls = json.load(f)
                 except Exception as e:
-                    pass
-                
-                if urls:
-                    for url in urls:
-                        try:
-                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
-                            req = requests.get(url_sub,timeout=10)
-                            if req.status_code == 200:
-                                nodes_configs = req.text
-                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
-                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
-                                if trojan_urls:
-                                    node_fake_config = trojan_urls[0]
-                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
-                                # configs_list.append("\n")
-                                configs_list.append(nodes_configs)
-                                # configs_list += nodes_configs.split("\n")
-                        except Exception as e:
-                            pass
-                if configs_list:
-                    random.shuffle(configs_list)
-                    resp = fake_config + '\n'.join(configs_list)
-            elif randomize_mode == "configs":
-                try:
-                    with open("nodes.json", 'r') as f:
-                        urls = json.load(f)
-                except Exception as e:
-                    pass
+                    logger.exception(f"Error in loading nodes.json {e}")
                 
                 if urls:
                     resp += "\n"
                     for url in urls:
                         try:
-                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                            url_sub = f"{url}/{g.user_uuid}/all2.txt"
                             req = requests.get(url_sub,timeout=10)
                             if req.status_code == 200:
                                 nodes_configs = req.text
+                                # logger.info(req.text)
                                 trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
                                 trojan_urls = re.findall(trojan_pattern, nodes_configs)
                                 if trojan_urls:
@@ -325,42 +367,14 @@ class UserView(FlaskView):
                                     nodes_configs = nodes_configs.replace(node_fake_config, "")
                                 resp += nodes_configs
                         except Exception as e:
-                            pass
-                configs = [line for line in resp.split('\n') if line.strip() != '']
-                if len(configs) > 2:
-                    first_configs = configs[0:1]
-                    rest_configs = configs[1:]
-                    random.shuffle(rest_configs)
-                    configs = first_configs + rest_configs
-                resp = '\n'.join(configs)
-        else:
-            try:
-                with open("nodes.json", 'r') as f:
-                    urls = json.load(f)
-            except Exception as e:
-                pass
-            
-            if urls:
-                resp += "\n"
-                for url in urls:
-                    try:
-                        url_sub = f"{url}/{g.account.uuid}/all2.txt"
-                        req = requests.get(url_sub,timeout=10)
-                        if req.status_code == 200:
-                            nodes_configs = req.text
-                            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
-                            trojan_urls = re.findall(trojan_pattern, nodes_configs)
-                            if trojan_urls:
-                                node_fake_config = trojan_urls[0]
-                                nodes_configs = nodes_configs.replace(node_fake_config, "")
-                            resp += nodes_configs
-                    except Exception as e:
-                        pass
-        # if limit:
+                            logger.exception(f"Error in loading {url} configs {e}")
+            # if limit:
 
-        if base64:
-            resp = do_base_64(resp)
-        return add_headers(resp, c)
+            if base64:
+                resp = do_base_64(resp)
+            return add_headers(resp, c)
+        except Exception as e:
+            logger.exception(f"Error in loading {url} configs {e}")
     
     @ route('/all2.txt', methods=["GET", "HEAD"])
     def all_configs2(self, base64=False):
