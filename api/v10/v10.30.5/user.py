@@ -1,3 +1,4 @@
+# Description: Hiddify API Expanded Edition
 import user_agents
 import datetime
 import random
