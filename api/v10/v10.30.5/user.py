@@ -74,6 +74,23 @@ class UserView(FlaskView):
         urls = None
         c = get_common_data(g.account.uuid, mode="new")
         configs = hutils.proxy.xrayjson.configs_as_json(c['domains'], c['user'], c['expire_days'], c['profile_title'])
+        bot_configs = None
+        username = False
+        try:
+            with open("hidybotconfigs.json", 'r') as f:
+                bot_configs = json.load(f)
+        except Exception as e:
+            logger.exception(f"Error in loading hidybotconfigs.json {e}")
+        if bot_configs:
+            username = bot_configs.get("username", False)
+        if username:
+            try:
+                configs_list_for_name = json.loads(configs)
+                encoded_name = f" 👤:{c['user'].name}"
+                configs_list_for_name[-1]['remarks'] = configs_list_for_name[-1]['remarks'] + encoded_name
+                configs = json.dumps(configs_list_for_name)
+            except Exception as e:
+                logger.exception(f"Error in cheanging name {e}")
         try:
             with open("nodes.json", 'r') as f:
                 urls = json.load(f)
