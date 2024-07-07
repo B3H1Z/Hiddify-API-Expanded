@@ -101,7 +101,7 @@ class UserView(FlaskView):
             configs_list = json.loads(configs)
             for url in urls:
                 try:
-                    url_sub = f"{url}/{g.account.uuid}/xray/"
+                    url_sub = f"{url}/{g.account.uuid}/xray2/"
                     req = requests.get(url_sub,timeout=10)
                     if req.status_code == 200:
                         nodes_configs = req.text
@@ -111,6 +111,17 @@ class UserView(FlaskView):
                 except Exception as e:
                     logger.exception(f"Error in loading {url} configs {e}")
             configs = json.dumps(configs_list, indent=2, cls=hutils.proxy.ProxyJsonEncoder)
+        return add_headers(configs, c, 'application/json')
+    
+    @route("/xray2/")
+    @route("/xray2")
+    @login_required(roles={Role.user})
+    def xray2(self):
+        '''Returns Xray JSON proxy config'''
+        # if not hconfig(ConfigEnum.sub_full_xray_json_enable):
+        #     return 'The Full Xray subscription is disabled'
+        c = get_common_data(g.account.uuid, mode="new")
+        configs = hutils.proxy.xrayjson.configs_as_json(c['domains'], c['user'], c['expire_days'], c['profile_title'])
         return add_headers(configs, c, 'application/json')
 
     @route("/singbox/")
