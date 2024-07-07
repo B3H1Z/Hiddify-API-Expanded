@@ -21,7 +21,8 @@ remove_cron_job_if_exists() {
 }
 
 if command -v pip3 &> /dev/null; then
-    version=$(pip3 show hiddifypanel | grep -oP 'Version: \K.*')
+    source /opt/hiddify-manager/common/utils.sh
+    version=$(get_installed_panel_version)
     if [ $? -eq 0 ]; then
         echo "HiddifyPanel version is found - $version"
         pip install --no-deps --force-reinstall hiddifypanel==$version
