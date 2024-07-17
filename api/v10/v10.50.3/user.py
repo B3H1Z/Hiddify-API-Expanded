@@ -87,7 +87,7 @@ class UserView(FlaskView):
             try:
                 configs_list_for_name = json.loads(configs)
                 encoded_name = f" 👤:{c['user'].name}"
-                configs_list_for_name[-1]['remarks'] = configs_list_for_name[-1]['remarks'] + encoded_name
+                configs_list_for_name[0]['remarks'] = configs_list_for_name[0]['remarks'] + encoded_name
                 configs = json.dumps(configs_list_for_name)
             except Exception as e:
                 logger.exception(f"Error in cheanging name {e}")
