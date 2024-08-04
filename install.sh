@@ -123,6 +123,9 @@ if command -v pip3 &> /dev/null; then
         base_location_api="$base_location_api/v10/v10.50.3"
         pip_location_1="$pip_location_1/v1"
     fi
+    else
+        display_error_and_exit "HiddifyPanel version is not supported!"
+    fi
 
 
     echo "Replacing files"
