@@ -97,35 +97,35 @@ if command -v pip3 &> /dev/null; then
     echo "Minor version: $minor_version"
     echo "Version: $version"
     # if major version is 8 
-    if [ "$major_version" -eq 8 ]; then
-        echo "HiddifyPanel version is 8"
-        # add /v8 to the base location
-        base_location_api="$base_location_api/v8"
-    fi
-    # if major version is 10
-    if [ "$major_version" -eq 10 ] && [ "$minor_version" -lt 20 ]; then
+if [ "$major_version" -eq 8 ]; then
+    echo "HiddifyPanel version is 8"
+    # add /v8 to the base location
+    base_location_api="$base_location_api/v8"
+elif [ "$major_version" -eq 10 ]; then
+    if [ "$minor_version" -lt 20 ]; then
         echo "HiddifyPanel version is 10"
         base_location_api="$base_location_api/v10"
         pip_location_1="$pip_location_1/v1"
-    # if minor version is 10.20
-    elif [ "$major_version" -eq 10 ] && [ "$minor_version" -eq 20 ]; then
+    elif [ "$minor_version" -eq 20 ]; then
         echo "HiddifyPanel version is 10.20"
         base_location_api="$base_location_api/v10/v10.20.4"
         pip_location_1="$pip_location_1/v1"
-    # if minor version is 10.30
-    elif [ "$major_version" -eq 10 ] && [ "$minor_version" -eq 30 ]; then
+    elif [ "$minor_version" -eq 30 ]; then
         echo "HiddifyPanel version is 10.30"
         base_location_api="$base_location_api/v10/v10.30.5"
         pip_location_1="$pip_location_1/v1"
-    # if minor version is 10.50
-    elif [ "$major_version" -eq 10 ] && [ "$minor_version" -eq 50 ]; then
+    elif [ "$minor_version" -eq 50 ]; then
         echo "HiddifyPanel version is 10.50"
         base_location_api="$base_location_api/v10/v10.50.3"
         pip_location_1="$pip_location_1/v1"
-    fi
     else
         display_error_and_exit "HiddifyPanel version is not supported!"
     fi
+
+else
+    display_error_and_exit "HiddifyPanel version is not supported!"
+fi
+
 
 
     echo "Replacing files"
