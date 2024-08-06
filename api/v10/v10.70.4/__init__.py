@@ -1,3 +1,4 @@
+# Description: Hiddify API Expanded Edition
 from flask_apispec import FlaskApiSpec
 from flask_apispec.extension import FlaskApiSpec
 from marshmallow import Schema, fields
@@ -21,11 +22,22 @@ def init_app(app):
     api.add_resource(AdminUserResource, "/admin/")
     # api.add_resource(TGBotResource, "/tgbot/")
     api.add_resource(SendMsgResource, "/send_msg/")
+    api.add_resource(bulkUsers, "/bulkusers/")
+    api.add_resource(Sub, "/sub/")
+    api.add_resource(hidybot_configs, "/configs/")
+    api.add_resource(UpdateUsage, "/update_usage/")
+    api.add_resource(Status, "/status/")
 
     api_uuid.add_resource(UserResource, "/user/")
     api_uuid.add_resource(AdminUserResource, "/admin/")
     api_uuid.add_resource(TGBotResource, "/tgbot/")
     api_uuid.add_resource(SendMsgResource, "/send_msg/")
+    api_uuid.add_resource(bulkUsers, "/bulkusers/")
+    api_uuid.add_resource(Sub, "/sub/")
+    api_uuid.add_resource(hidybot_configs, "/configs/")
+    api_uuid.add_resource(UpdateUsage, "/update_usage/")
+    api_uuid.add_resource(Status, "/status/")
+
 
     # with app.app_context():
     #     register_bot()

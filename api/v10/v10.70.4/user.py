@@ -1,3 +1,4 @@
+# Description: Hiddify API Expanded Edition
 import user_agents
 import datetime
 import random
@@ -16,7 +17,27 @@ from hiddifypanel.models import *
 from hiddifypanel import hutils
 
 
+import requests
+import json
+
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.ERROR)
+
+file_handler = logging.FileHandler('api-expanded.log')
+formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
 class UserView(FlaskView):
+
+    @route('/useragent/')
+    @login_required(roles={Role.user})
+    def test(self):
+        ua = request.user_agent.string
+        print(ua)
+        return ua
 
     def index(self):
         return self.auto_sub()
@@ -24,34 +45,78 @@ class UserView(FlaskView):
     def auto_sub(self):
         if g.user_agent['is_browser']:
             return self.new()
-        return self.get_proper_config() or self.links_imp(base64=True)
+        return self.get_proper_config() or self.all_configs(base64=True)
 
     # former /sub/ or /sub (it was auto actually but we named it as /sub/)
     @route('/auto/')
     @route('/auto')
     @login_required(roles={Role.user})
     def force_sub(self):
-        return self.get_proper_config() or self.links_imp(base64=False)
+        return self.get_proper_config() or self.all_configs(base64=False)
 
     # region new endpoints
     @route("/sub/")
     @route("/sub")
     @login_required(roles={Role.user})
     def sub(self):
-        '''Returns proxy links (not base64 encoded)'''
-        return self.links_imp(base64=False)
+        return self.all_configs(base64=False)
 
     @route("/sub64/")
     @route("/sub64")
     @login_required(roles={Role.user})
     def sub64(self):
-        '''Returns proxy links (base64 encoded)'''
-        return self.links_imp(base64=True)
+        return self.all_configs(base64=True)
 
     @route("/xray/")
     @route("/xray")
     @login_required(roles={Role.user})
     def xray(self):
+        urls = None
+        c = get_common_data(g.account.uuid, mode="new")
+        configs = hutils.proxy.xrayjson.configs_as_json(c['domains'], c['user'], c['expire_days'], c['profile_title'])
+        bot_configs = None
+        username = False
+        try:
+            with open("hidybotconfigs.json", 'r') as f:
+                bot_configs = json.load(f)
+        except Exception as e:
+            logger.exception(f"Error in loading hidybotconfigs.json {e}")
+        if bot_configs:
+            username = bot_configs.get("username", False)
+        if username:
+            try:
+                configs_list_for_name = json.loads(configs)
+                encoded_name = f" 👤:{c['user'].name}"
+                configs_list_for_name[0]['remarks'] = configs_list_for_name[0]['remarks'] + encoded_name
+                configs = json.dumps(configs_list_for_name)
+            except Exception as e:
+                logger.exception(f"Error in cheanging name {e}")
+        try:
+            with open("nodes.json", 'r') as f:
+                urls = json.load(f)
+        except Exception as e:
+            logger.exception(f"Error in loading nodes.json {e}")
+        
+        if urls:
+            configs_list = json.loads(configs)
+            for url in urls:
+                try:
+                    url_sub = f"{url}/{g.account.uuid}/xray2/"
+                    req = requests.get(url_sub,timeout=10)
+                    if req.status_code == 200:
+                        nodes_configs = req.text
+                        node_configs_list = json.loads(nodes_configs)
+                        if node_configs_list:
+                            configs_list.extend(node_configs_list)
+                except Exception as e:
+                    logger.exception(f"Error in loading {url} configs {e}")
+            configs = json.dumps(configs_list, indent=2, cls=hutils.proxy.ProxyJsonEncoder)
+        return add_headers(configs, c, 'application/json')
+    
+    @route("/xray2/")
+    @route("/xray2")
+    @login_required(roles={Role.user})
+    def xray2(self):
         '''Returns Xray JSON proxy config'''
         # if not hconfig(ConfigEnum.sub_full_xray_json_enable):
         #     return 'The Full Xray subscription is disabled'
@@ -63,15 +128,13 @@ class UserView(FlaskView):
     @route("/singbox")
     @login_required(roles={Role.user})
     def singbox_full(self):
-        '''Returns singbox client JSON config'''
-        return self.full_singbox_imp()
+        return self.full_singbox()
 
     @route("/singbox-ssh/")
     @route("/singbox-ssh")
     @login_required(roles={Role.user})
     def singbox_ssh(self):
-        '''Returns singbox client JSON config (ssh)'''
-        return self.singbox_ssh_imp()
+        return self.singbox()
 
     @route("/wireguard/")
     @route("/wireguard")
@@ -100,7 +163,6 @@ PrivateKey = {wg['wg_pk']}
 Address = {addrs}
 DNS = 1.1.1.1
 MTU = 1390
-
 [Peer]
 PublicKey = {wg['wg_pub']}
 PresharedKey = {wg['wg_psk']}
@@ -115,15 +177,13 @@ Endpoint = {next(iter(servers))}:61339 #{servers}
     @route("/clash")
     @login_required(roles={Role.user})
     def clash(self):
-        '''Returns clash client config'''
-        return self.clash_config_imp(meta_or_normal="normal")
+        return self.clash_config(meta_or_normal="normal")
 
     @route("/clashmeta/")
     @route("/clashmeta")
     @login_required(roles={Role.user})
     def clashmeta(self):
-        '''Returns clash meta client config'''
-        return self.clash_config_imp(meta_or_normal="meta")
+        return self.clash_config(meta_or_normal="meta")
     # endregion
 
     @ route('/new/')
@@ -140,28 +200,26 @@ Endpoint = {next(iter(servers))}:61339 #{servers}
         return render_template('new.html', **c, ua=user_agent)
 
     def get_proper_config(self):
-        '''Returns proper config based on user agent'''
         if g.user_agent['is_browser']:
             return None
-
         ua = request.user_agent.string
         if g.user_agent['is_singbox'] or re.match('^(HiddifyNext|Dart|SFI|SFA)', ua, re.IGNORECASE):
-            return self.full_singbox_imp()
+            return self.full_singbox()
 
         if re.match('^(Clash-verge|Clash-?Meta|Stash|NekoBox|NekoRay|Pharos|hiddify-desktop)', ua, re.IGNORECASE):
-            return self.clash_config_imp(meta_or_normal="meta")
+            return self.clash_config(meta_or_normal="meta")
         if re.match('^(Clash|Stash)', ua, re.IGNORECASE):
-            return self.clash_config_imp(meta_or_normal="normal")
+            return self.clash_config(meta_or_normal="normal")
 
-        if hconfig(ConfigEnum.sub_full_xray_json_enable):
-            # return the old "Subscription link b64" sub if the "Full Xray" sub is disabled (wanted by user)
-            if g.user_agent.get('is_v2rayng') and hutils.flask.is_client_version(hutils.flask.ClientVersion.v2ryang, 1, 8, 17):
-                return self.xray()
-            elif g.user_agent.get('is_streisand'):
-                return self.xray()
+        if g.user_agent.get('is_v2rayng'):
+            return self.xray()
 
-        if re.match('^(Hiddify|FoXray|Fair|v2rayNG|SagerNet|Shadowrocket|V2Box|Loon|Liberty|Streisand)', ua, re.IGNORECASE):
-            return self.links_imp(base64=True)
+        # if 'HiddifyNext' in ua or 'Dart' in ua:
+        #     return self.clash_config(meta_or_normal="meta")
+
+        # if any([p in ua for p in ['FoXray', 'HiddifyNG','Fair%20VPN' ,'v2rayNG', 'SagerNet']]):
+        if re.match('^(Hiddify|FoXray|Fair|v2rayNG|SagerNet|Shadowrocket|V2Box|Loon|Liberty)', ua, re.IGNORECASE):
+            return self.all_configs(base64=True)
 
     @route('/clash/<meta_or_normal>/proxies.yml')
     @route('/clash/proxies.yml')
@@ -218,12 +276,8 @@ Endpoint = {next(iter(servers))}:61339 #{servers}
     @ route('/clash/<typ>.yml', methods=["GET", "HEAD"])
     @ route('/clash/<meta_or_normal>/<typ>.yml', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def clash_config_imp(self, meta_or_normal="normal", typ="all.yml"):
+    def clash_config(self, meta_or_normal="normal", typ="all.yml"):
         mode = request.args.get("mode")
-        if meta_or_normal == 'meta' and not hconfig(ConfigEnum.sub_full_clash_meta_enable):
-            return 'The Clash meta subscription is disabled'
-        elif meta_or_normal == 'normal' and not hconfig(ConfigEnum.sub_full_clash_enable):
-            return 'The Clash subscription is disabled'
 
         c = get_common_data(g.account.uuid, mode)
 
@@ -238,10 +292,7 @@ Endpoint = {next(iter(servers))}:61339 #{servers}
 
     @ route('/full-singbox.json', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def full_singbox_imp(self):
-        # if not hconfig(ConfigEnum.sub_full_singbox_enable):
-        #     return 'The Full Singbox subscription is disabled'
-
+    def full_singbox(self):
         mode = "new"  # request.args.get("mode")
         c = get_common_data(g.account.uuid, mode)
         # response.content_type = 'text/plain';
@@ -254,12 +305,9 @@ Endpoint = {next(iter(servers))}:61339 #{servers}
 
     @ route('/singbox.json', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def singbox_ssh_imp(self):
+    def singbox(self):
         if not hconfig(ConfigEnum.ssh_server_enable):
-            return "The SSH server is disabled"
-        # elif not hconfig(ConfigEnum.sub_singbox_ssh_enable):
-        #     return "The Singbox: SSH subscription is disabled"
-
+            return "SSH server is disable in settings"
         mode = "new"  # request.args.get("mode")
         c = get_common_data(g.account.uuid, mode)
         # response.content_type = 'text/plain';
@@ -273,15 +321,148 @@ Endpoint = {next(iter(servers))}:61339 #{servers}
 
     @route('/all.txt', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def links_imp(self, base64=False):
-        '''Returns subscription links (base64 or not)'''
+    def all_configs(self, base64=False):
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
-        # if base64 and not hconfig(ConfigEnum.sub_full_links_b64_enable):
-        #     return 'The Subscription link b64 is disabled'
-        # if not base64 and not hconfig(ConfigEnum.sub_full_links_enable):
-        #     return 'The Subscription link is disabled'
+        bot_configs = None
+        username = False
+        randomize = False
+        randomize_mode = "servers"
+        try:
+            with open("hidybotconfigs.json", 'r') as f:
+                bot_configs = json.load(f)
+        except Exception as e:
+            logger.exception(f"Error in loading hidybotconfigs.json {e}")
+        if bot_configs:
+            username = bot_configs.get("username", False)
+            randomize = bot_configs.get("randomize", False)
+            randomize_mode = bot_configs.get("randomize_mode", "servers")
+            # limit = limit or request.args.get("limit", "")
+            # if limit:
+            #     try:
+            #         limit = int(limit)
+            #     except Exception as e:
+            #         limit = None
+        c = get_common_data(g.account.uuid, mode)
+        # response.content_type = 'text/plain';
+        urls = None
+        resp = None
+        if request.method == 'HEAD':
+            resp = ""
+        else:
+            # render_template('all_configs.txt', **c, base64=hutils.encode.do_base_64)
+            resp = hutils.proxy.xray.make_v2ray_configs(c['domains'], c['user'], c['expire_days'], c['ip_debug'])
+        if username:
+            # شامل اینتر اخر نمیشود
+            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*[^\n]'
+            trojan_urls = re.findall(trojan_pattern, resp)
+            if trojan_urls:
+                fake_config = trojan_urls[0]
+                encoded_name = f" 👤:{c['user'].name}"
+                new_fake_config = fake_config + encoded_name
+                resp = resp.replace(fake_config, new_fake_config)
+        if randomize:
+            if randomize_mode == "servers":
+                fake_config = ""
+                configs_list = []
+                # configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)|tuic:\/\/[^\n]+)|(hysteria2:\/\/[^\n]+)|(hysteria:\/\/[^\n]+)', resp)
+                #شامل اینتر اخر می شود
+                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                trojan_urls = re.findall(trojan_pattern, resp)
+                if trojan_urls:
+                    fake_config = trojan_urls[0] 
+                    resp = resp.replace(fake_config, "")
+                    fake_config += '\n'
+                configs_list.append(resp)
+                # configs_list = resp.split("\n")
+                try:
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
+                except Exception as e:
+                    logger.exception(f"Error in loading nodes.json {e}")
+                
+                if urls:
+                    for url in urls:
+                        try:
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                # configs_list.append("\n")
+                                configs_list.append(nodes_configs)
+                                # configs_list += nodes_configs.split("\n")
+                        except Exception as e:
+                            logger.exception(f"Error in loading {url} configs {e}")
+                if configs_list:
+                    random.shuffle(configs_list)
+                    resp = fake_config + '\n'.join(configs_list)
+            elif randomize_mode == "configs":
+                try:
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
+                except Exception as e:
+                    logger.exception(f"Error in loading nodes.json {e}")
+                
+                if urls:
+                    for url in urls:
+                        resp += "\n"
+                        try:
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                resp += nodes_configs
+                        except Exception as e:
+                            logger.exception(f"Error in loading {url} configs {e}")
+                configs = [line for line in resp.split('\n') if line.strip() != '']
+                if len(configs) > 2:
+                    first_configs = configs[0:1]
+                    rest_configs = configs[1:]
+                    random.shuffle(rest_configs)
+                    configs = first_configs + rest_configs
+                resp = '\n'.join(configs)
+        else:
+            try:
+                with open("nodes.json", 'r') as f:
+                    urls = json.load(f)
+            except Exception as e:
+                logger.exception(f"Error in loading nodes.json {e}")
+            
+            if urls:
+                for url in urls:
+                    resp += "\n"
+                    try:
+                        url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                        req = requests.get(url_sub,timeout=10)
+                        if req.status_code == 200:
+                            nodes_configs = req.text
+                            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                            trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                            if trojan_urls:
+                                node_fake_config = trojan_urls[0]
+                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                            resp += nodes_configs
+                    except Exception as e:
+                        logger.exception(f"Error in loading {url} configs {e}")
+        if base64:
+            resp = hutils.encode.do_base_64(resp)
+        return add_headers(resp, c)
 
+    @route('/all2.txt', methods=["GET", "HEAD"])
+    @login_required(roles={Role.user})
+    def all_configs2(self, base64=False):
+        mode = "new"  # request.args.get("mode")
+        base64 = base64 or request.args.get("base64", "").lower() == "true"
         c = get_common_data(g.account.uuid, mode)
         # response.content_type = 'text/plain';
         if request.method == 'HEAD':
@@ -294,6 +475,332 @@ Endpoint = {next(iter(servers))}:61339 #{servers}
             resp = hutils.encode.do_base_64(resp)
         return add_headers(resp, c)
 
+
+    @ route('/hidybot.txt', methods=["GET", "HEAD"])
+    def hidybot_configs(self, base64=False):
+        mode = "new"  # request.args.get("mode")
+        base64 = base64 or request.args.get("base64", "").lower() == "true"
+        bot_configs = None
+        username = False
+        randomize = False
+        randomize_mode = "servers"
+        try:
+            with open("hidybotconfigs.json", 'r') as f:
+                bot_configs = json.load(f)
+        except Exception as e:
+            logger.exception(f"Error in loading hidybotconfigs.json {e}")
+        if bot_configs:
+            username = bot_configs.get("username", False)
+            randomize = bot_configs.get("randomize", False)
+            randomize_mode = bot_configs.get("randomize_mode", "servers")
+            # limit = limit or request.args.get("limit", "")
+            # if limit:
+            #     try:
+            #         limit = int(limit)
+            #     except Exception as e:
+            #         limit = None
+        c = get_common_data(g.account.uuid, mode)
+        # response.content_type = 'text/plain';
+        urls = None
+        resp = None
+        if request.method == 'HEAD':
+            resp = ""
+        else:
+            # render_template('all_configs.txt', **c, base64=hutils.encode.do_base_64)
+            resp = hutils.proxy.xray.make_v2ray_configs(c['domains'], c['user'], c['expire_days'], c['ip_debug'])
+        if username:
+            # شامل اینتر اخر نمیشود
+            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*[^\n]'
+            trojan_urls = re.findall(trojan_pattern, resp)
+            if trojan_urls:
+                fake_config = trojan_urls[0]
+                encoded_name = f" 👤:{c['user'].name}"
+                new_fake_config = fake_config + encoded_name
+                resp = resp.replace(fake_config, new_fake_config)
+        if randomize:
+            if randomize_mode == "servers":
+                fake_config = ""
+                configs_list = []
+                # configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)|tuic:\/\/[^\n]+)|(hysteria2:\/\/[^\n]+)|(hysteria:\/\/[^\n]+)', resp)
+                #شامل اینتر اخر می شود
+                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                trojan_urls = re.findall(trojan_pattern, resp)
+                if trojan_urls:
+                    fake_config = trojan_urls[0] 
+                    resp = resp.replace(fake_config, "")
+                    fake_config += '\n'
+                    configs_list.append(resp)
+                # configs_list = resp.split("\n")
+                try:
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
+                except Exception as e:
+                    logger.exception(f"Error in loading nodes.json {e}")
+                
+                if urls:
+                    for url in urls:
+                        try:
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                # configs_list.append("\n")
+                                configs_list.append(nodes_configs)
+                                # configs_list += nodes_configs.split("\n")
+                        except Exception as e:
+                            logger.exception(f"Error in loading {url} configs {e}")
+                if configs_list:
+                    random.shuffle(configs_list)
+                    resp = fake_config + '\n'.join(configs_list)
+            elif randomize_mode == "configs":
+                try:
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
+                except Exception as e:
+                    logger.exception(f"Error in loading nodes.json {e}")
+                
+                if urls:
+                    for url in urls:
+                        resp += "\n"
+                        try:
+                            url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                nodes_configs = req.text
+                                trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                                trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                                if trojan_urls:
+                                    node_fake_config = trojan_urls[0]
+                                    nodes_configs = nodes_configs.replace(node_fake_config, "")
+                                resp += nodes_configs
+                        except Exception as e:
+                            logger.exception(f"Error in loading {url} configs {e}")
+                configs = [line for line in resp.split('\n') if line.strip() != '']
+                if len(configs) > 2:
+                    first_configs = configs[0:1]
+                    rest_configs = configs[1:]
+                    random.shuffle(rest_configs)
+                    configs = first_configs + rest_configs
+                resp = '\n'.join(configs)
+        else:
+            try:
+                with open("nodes.json", 'r') as f:
+                    urls = json.load(f)
+            except Exception as e:
+                logger.exception(f"Error in loading nodes.json {e}")
+            
+            if urls:
+                for url in urls:
+                    resp += "\n"
+                    try:
+                        url_sub = f"{url}/{g.account.uuid}/all2.txt"
+                        req = requests.get(url_sub,timeout=10)
+                        if req.status_code == 200:
+                            nodes_configs = req.text
+                            trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*\n'
+                            trojan_urls = re.findall(trojan_pattern, nodes_configs)
+                            if trojan_urls:
+                                node_fake_config = trojan_urls[0]
+                                nodes_configs = nodes_configs.replace(node_fake_config, "")
+                            resp += nodes_configs
+                    except Exception as e:
+                        logger.exception(f"Error in loading {url} configs {e}")
+        if base64:
+            resp = hutils.encode.do_base_64(resp)
+        return add_headers(resp, c)
+    
+    @ route('/fragment/', methods=["GET", "HEAD"])
+    def fragment_configs(self):
+        bot_configs = None
+        try:
+            with open("hidybotconfigs.json", 'r') as f:
+                bot_configs = json.load(f)
+        except Exception as e:
+           logger.exception(f"Error in loading hidybotconfigs.json {e}")
+        if bot_configs:
+            fragment_configs = bot_configs.get("fragment", None)
+        if fragment_configs:
+            c = get_common_data(g.account.uuid, "new")
+            # response.content_type = 'text/plain';
+            urls = None
+            resp = None
+            if request.method == 'HEAD':
+                resp = ""
+            else:
+                resp = hutils.proxy.xray.make_v2ray_configs(**c)
+                try:
+                    with open("nodes.json", 'r') as f:
+                        urls = json.load(f)
+                except Exception as e:
+                    logger.exception(f"Error in loading nodes.json {e}")
+                if urls:
+                    resp += "\n"
+                    for url in urls:
+                        try:
+                            # BASE_URL = urlparse(url).scheme + "://" + urlparse(url).netloc
+                            # PANEL_DIR = urlparse(url).path.split('/')
+                            url_sub = f"{url}/{g.account.uuid}/all.txt"
+                            req = requests.get(url_sub,timeout=10)
+                            if req.status_code == 200:
+                                resp += req.text + "\n"
+                        except Exception as e:
+                            logger.exception(f"Error in loading {url} configs {e}")
+
+                configs = re.findall(r'(vless:\/\/[^\n]+)|(vmess:\/\/[^\n]+)|(trojan:\/\/[^\n]+)', resp)
+                for config in configs:
+                    if config[0]:
+                        if fragment_configs in config[0]:
+                            try:
+                                url = urlparse(config[0])
+                                search_params = parse_qs(url.query)
+                                id = config[0].split('://')[1].split('@')[0]
+                                address = config[0].split('@')[1].split(':')[0]
+                                port = int(config[0].split('@')[1].split(':')[1].split('?')[0])
+
+                                output = {
+                                    "dns": {
+                                        "hosts": {
+                                            "domain:googleapis.cn": "googleapis.com"
+                                        },
+                                        "servers": ["1.1.1.1"]
+                                    },
+                                    "inbounds": [
+                                        {
+                                            "listen": "127.0.0.1",
+                                            "port": 10808,
+                                            "protocol": "socks",
+                                            "settings": {
+                                                "auth": "noauth",
+                                                "udp": True,
+                                                "userLevel": 8
+                                            },
+                                            "sniffing": {
+                                                "destOverride": ["http", "tls"],
+                                                "enabled": True
+                                            },
+                                            "tag": "socks"
+                                        },
+                                        {
+                                            "listen": "127.0.0.1",
+                                            "port": 10809,
+                                            "protocol": "http",
+                                            "settings": {
+                                                "userLevel": 8
+                                            },
+                                            "tag": "http"
+                                        }
+                                    ],
+                                    "log": {
+                                        "loglevel": "warning"
+                                    },
+                                    "outbounds": [
+                                        {
+                                            "mux": {
+                                                "concurrency": 8,
+                                                "enabled": False
+                                            },
+                                            "protocol": "vless",
+                                            "settings": {
+                                                "vnext": [
+                                                    {
+                                                        "address": address,
+                                                        "port": port,
+                                                        "users": [
+                                                            {
+                                                                "encryption": search_params.get("encryption")[0],
+                                                                "flow": "",
+                                                                "id": id,
+                                                                "level": 8,
+                                                                "security": "auto"
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            },
+                                            "streamSettings": {
+                                                "network": search_params.get("type")[0],
+                                                "security": search_params.get("security")[0],
+                                                "tlsSettings": {
+                                                    "allowInsecure": False,
+                                                    "alpn": [search_params.get("alpn")[0]],
+                                                    "fingerprint": search_params.get("fp")[0],
+                                                    "publicKey": "",
+                                                    "serverName": search_params.get("sni")[0],
+                                                    "shortId": "",
+                                                    "show": False,
+                                                    "spiderX": ""
+                                                },
+                                                "wsSettings": {
+                                                    "headers": {
+                                                        "Host": search_params.get("host")[0]
+                                                    },
+                                                    "path": search_params.get("path")[0]
+                                                }
+                                            },
+                                            "proxySettings": {
+                                                "tag": "fragment",
+                                                "transportLayer": True
+                                            },
+                                            "tag": "proxy"
+                                        },
+                                        {
+                                            "protocol": "freedom",
+                                            "settings": {},
+                                            "tag": "direct"
+                                        },
+                                        {
+                                            "protocol": "freedom",
+                                            "tag": "fragment",
+                                            "domainStrategy": "UseIP",
+                                            "sniffing": {
+                                                "enabled": True,
+                                                "destOverride": ["http", "tls"]
+                                            },
+                                            "settings": {
+                                                "fragment": {
+                                                    "packets": "tlshello",
+                                                    "length": "5-10",
+                                                    "interval": "1-5"
+                                                }
+                                            },
+                                            "streamSettings": {
+                                                "sockopt": {
+                                                    "tcpNoDelay": True,
+                                                    "domainStrategy": "UseIP"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "protocol": "blackhole",
+                                            "settings": {
+                                                "response": {
+                                                    "type": "http"
+                                                }
+                                            },
+                                            "tag": "block"
+                                        }
+                                    ],
+                                    "routing": {
+                                        "domainStrategy": "IPIfNonMatch",
+                                        "rules": [
+                                            {
+                                                "ip": ["1.1.1.1"],
+                                                "outboundTag": "proxy",
+                                                "port": "53",
+                                                "type": "field"
+                                            }
+                                        ]
+                                    }
+                                }
+                                resp = json.dumps(output)
+                                return add_headers(resp, c)
+                            except Exception as e:
+                                return jsonify({'status': 502, 'msg': 'error:\n{e}'})
     @ route("/offline.html")
     @login_required(roles={Role.user})
     def offline():
