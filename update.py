@@ -41,24 +41,32 @@ def install_or_update():
         return False
 
 def get_pip_location():
-    pip_location_command_venv = f"source {VENV_ACTIVATE_PATH} && pip3 show hiddifypanel | grep -oP 'Location: \K.*' && deactivate"
-    pip_location_command = "pip3 show hiddifypanel | grep -oP 'Location: \K.*'"
+    pip_location_command_venv = f"bash -c 'source {VENV_ACTIVATE_PATH} && pip3 show hiddifypanel | grep -oP \"Location: \\K.*\" && deactivate'"
+    pip_location_command = "pip3 show hiddifypanel | grep -oP 'Location: \\K.*'"
 
-    # first try to get pip location from venv
-    # if not found, try to get pip location from system
     try:
+        # Attempt to get pip location with the virtual environment activated
         pip_location = subprocess.check_output(pip_location_command_venv, shell=True).decode("utf-8").strip()
+
         if not pip_location:
+            # Fallback to trying without activating the virtual environment
             pip_location = subprocess.check_output(pip_location_command, shell=True).decode("utf-8").strip()
+
         if not pip_location:
-            print("Failed to get pip location")
+            print("Failed to get pip location after both attempts.")
             return False
+
         return pip_location
-    except Exception as e:
-        print(e)
+
+    except subprocess.CalledProcessError as e:
+        print(f"Command failed: {e.cmd}")
         print("Failed to get pip location")
         return False
-    # try:
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        print("Failed to get pip location")
+        return False
     #     pip_location = subprocess.check_output(pip_location_command, shell=True).decode("utf-8").strip()
     #     if not pip_location:
     #         print("Failed to get pip location")
