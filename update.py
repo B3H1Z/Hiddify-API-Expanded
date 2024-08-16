@@ -73,16 +73,30 @@ def get_hiddify_panel_version():
     hiddify_panel_version_command_venv = f"source {VENV_ACTIVATE_PATH} && pip3 show hiddifypanel | grep -oP 'Version: \K.*' && deactivate"
     hiddify_panel_version_command = "pip3 show hiddifypanel | grep -oP 'Version: \K.*'"
     
+    hiddify_panel_version_command_venv = f"bash -c 'source {VENV_ACTIVATE_PATH} && pip3 show hiddifypanel | grep -oP \"Version: \\K.*\" && deactivate'"
+    hiddify_panel_version_command = "pip3 show hiddifypanel | grep -oP 'Version: \\K.*'"
+
     try:
+        # Attempt to get version with the virtual environment activated
         hiddify_panel_version = subprocess.check_output(hiddify_panel_version_command_venv, shell=True).decode("utf-8").strip()
+
         if not hiddify_panel_version:
+            # Fallback to trying without activating the virtual environment
             hiddify_panel_version = subprocess.check_output(hiddify_panel_version_command, shell=True).decode("utf-8").strip()
+
         if not hiddify_panel_version:
-            print("Failed to get hiddify panel version")
+            print("Failed to get hiddify panel version after both attempts.")
             return False
+
         return hiddify_panel_version
+
+    except subprocess.CalledProcessError as e:
+        print(f"Command failed: {e.cmd}")
+        print("Failed to get hiddify panel version")
+        return False
+
     except Exception as e:
-        print(e)
+        print(f"Unexpected error: {e}")
         print("Failed to get hiddify panel version")
         return False
     
