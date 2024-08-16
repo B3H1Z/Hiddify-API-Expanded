@@ -5,7 +5,7 @@ import os
 
 
 sign_message = "# Description: Hiddify API Expanded Edition".lower()
-api_location = "hiddifypanel/panel/commercial/restapi"
+api_location = "hiddifypanel/panel/commercial/restapi/v1"
 user_location = "hiddifypanel/panel/user"
 json_version_file_path = "/usr/local/bin/hiddify-api-expanded/version.json"
 VENV_ACTIVATE_PATH="/opt/hiddify-manager/.venv/bin/activate"
