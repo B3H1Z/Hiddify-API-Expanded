@@ -13,6 +13,7 @@ user_location="panel/user"
 script_location="/usr/local/bin/hiddify-api-expanded"
 base_location="/opt/Hiddify-API-Expanded" 
 base_location_api="/opt/Hiddify-API-Expanded/api" 
+VENV_ACTIVATE_PATH="/opt/hiddify-manager/.venv/bin/activate"
 
 # Function to display error messages and exit
 function display_error_and_exit() {
@@ -45,7 +46,6 @@ sudo rm -rf /usr/lib/python3/dist-packages/OpenSSL
 sudo pip3 install pyopenssl
 sudo pip3 install pyopenssl --upgrade
 
-# اضافه کردن دستور تغییر مجوز‌ها
 echo "Setting permissions for /opt/hiddify-manager/log/"
 sudo chmod -R 777 /opt/hiddify-manager/log/
 

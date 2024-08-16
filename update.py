@@ -8,6 +8,7 @@ sign_message = "# Description: Hiddify API Expanded Edition".lower()
 api_location = "hiddifypanel/panel/commercial/restapi"
 user_location = "hiddifypanel/panel/user"
 json_version_file_path = "/usr/local/bin/hiddify-api-expanded/version.json"
+VENV_ACTIVATE_PATH="/opt/hiddify-manager/.venv/bin/activate"
 
 def is_version_less(version1, version2):
     v1_parts = list(map(int, version1.split('.')))
@@ -40,22 +41,42 @@ def install_or_update():
         return False
 
 def get_pip_location():
+    pip_location_command_venv = f"source {VENV_ACTIVATE_PATH} && pip3 show hiddifypanel | grep -oP 'Location: \K.*' && deactivate"
     pip_location_command = "pip3 show hiddifypanel | grep -oP 'Location: \K.*'"
+
+    # first try to get pip location from venv
+    # if not found, try to get pip location from system
     try:
-        pip_location = subprocess.check_output(pip_location_command, shell=True).decode("utf-8").strip()
+        pip_location = subprocess.check_output(pip_location_command_venv, shell=True).decode("utf-8").strip()
+        if not pip_location:
+            pip_location = subprocess.check_output(pip_location_command, shell=True).decode("utf-8").strip()
         if not pip_location:
             print("Failed to get pip location")
             return False
-        print(f"pip location: {pip_location}")
         return pip_location
     except Exception as e:
         print(e)
         print("Failed to get pip location")
         return False
+    # try:
+    #     pip_location = subprocess.check_output(pip_location_command, shell=True).decode("utf-8").strip()
+    #     if not pip_location:
+    #         print("Failed to get pip location")
+    #         return False
+    #     print(f"pip location: {pip_location}")
+    #     return pip_location
+    # except Exception as e:
+    #     print(e)
+    #     print("Failed to get pip location")
+    #     return False
 def get_hiddify_panel_version():
+    hiddify_panel_version_command_venv = f"source {VENV_ACTIVATE_PATH} && pip3 show hiddifypanel | grep -oP 'Version: \K.*' && deactivate"
     hiddify_panel_version_command = "pip3 show hiddifypanel | grep -oP 'Version: \K.*'"
+    
     try:
-        hiddify_panel_version = subprocess.check_output(hiddify_panel_version_command, shell=True).decode("utf-8").strip()
+        hiddify_panel_version = subprocess.check_output(hiddify_panel_version_command_venv, shell=True).decode("utf-8").strip()
+        if not hiddify_panel_version:
+            hiddify_panel_version = subprocess.check_output(hiddify_panel_version_command, shell=True).decode("utf-8").strip()
         if not hiddify_panel_version:
             print("Failed to get hiddify panel version")
             return False
@@ -64,6 +85,17 @@ def get_hiddify_panel_version():
         print(e)
         print("Failed to get hiddify panel version")
         return False
+    
+    # try:
+    #     hiddify_panel_version = subprocess.check_output(hiddify_panel_version_command, shell=True).decode("utf-8").strip()
+    #     if not hiddify_panel_version:
+    #         print("Failed to get hiddify panel version")
+    #         return False
+    #     return hiddify_panel_version
+    # except Exception as e:
+    #     print(e)
+    #     print("Failed to get hiddify panel version")
+    #     return False
 def return_file_first_line(file_path):
     try:
         with open(file_path, "r") as file:
