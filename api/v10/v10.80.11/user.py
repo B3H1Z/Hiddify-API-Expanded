@@ -68,8 +68,6 @@ class UserView(FlaskView):
         '''Returns proxy links (base64 encoded)'''
         return self.links_imp(base64=True)
 
-    
-    
     @route("/xray/")
     @route("/xray")
     @login_required(roles={Role.user})
@@ -77,6 +75,7 @@ class UserView(FlaskView):
         '''Returns Xray JSON proxy config'''
         # if not hconfig(ConfigEnum.sub_full_xray_json_enable):
         #     return 'The Full Xray subscription is disabled'
+        urls = None
         c = get_common_data(g.account.uuid, mode="new")
         configs = hutils.proxy.xrayjson.configs_as_json(c['domains'], c['user'], c['expire_days'], c['profile_title'])
         bot_configs = None
@@ -117,7 +116,7 @@ class UserView(FlaskView):
                     logger.exception(f"Error in loading {url} configs {e}")
             configs = json.dumps(configs_list, indent=2, cls=hutils.proxy.ProxyJsonEncoder)
         return add_headers(configs, c, 'application/json')
-    
+
     @route("/xray2/")
     @route("/xray2")
     @login_required(roles={Role.user})
@@ -125,12 +124,10 @@ class UserView(FlaskView):
         '''Returns Xray JSON proxy config'''
         # if not hconfig(ConfigEnum.sub_full_xray_json_enable):
         #     return 'The Full Xray subscription is disabled'
-        urls = None
         c = get_common_data(g.account.uuid, mode="new")
         configs = hutils.proxy.xrayjson.configs_as_json(c['domains'], c['user'], c['expire_days'], c['profile_title'])
         return add_headers(configs, c, 'application/json')
     
-
     @route("/singbox/")
     @route("/singbox")
     @login_required(roles={Role.user})
@@ -350,21 +347,21 @@ class UserView(FlaskView):
             username = bot_configs.get("username", False)
             randomize = bot_configs.get("randomize", False)
             randomize_mode = bot_configs.get("randomize_mode", "servers")
-        # if base64 and not hconfig(ConfigEnum.sub_full_links_b64_enable):
-        #     return 'The Subscription link b64 is disabled'
-        # if not base64 and not hconfig(ConfigEnum.sub_full_links_enable):
-        #     return 'The Subscription link is disabled'
-
+            # limit = limit or request.args.get("limit", "")
+            # if limit:
+            #     try:
+            #         limit = int(limit)
+            #     except Exception as e:
+            #         limit = None
         c = get_common_data(g.account.uuid, mode)
+        # response.content_type = 'text/plain';
         urls = None
         resp = None
-        # response.content_type = 'text/plain';
         if request.method == 'HEAD':
             resp = ""
         else:
             # render_template('all_configs.txt', **c, base64=hutils.encode.do_base_64)
             resp = hutils.proxy.xray.make_v2ray_configs(c['domains'], c['user'], c['expire_days'], c['ip_debug'])
-            
         if username:
             # شامل اینتر اخر نمیشود
             trojan_pattern = r'^trojan:\/\/.*\bsni=fake_ip_for_sub_link\b.*[^\n]'
@@ -473,9 +470,15 @@ class UserView(FlaskView):
     
     @route('/all2.txt', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def all_configs2(self, base64=False):
+    def links_imp2(self, base64=False):
+        '''Returns subscription links (base64 or not)'''
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
+        # if base64 and not hconfig(ConfigEnum.sub_full_links_b64_enable):
+        #     return 'The Subscription link b64 is disabled'
+        # if not base64 and not hconfig(ConfigEnum.sub_full_links_enable):
+        #     return 'The Subscription link is disabled'
+
         c = get_common_data(g.account.uuid, mode)
         # response.content_type = 'text/plain';
         if request.method == 'HEAD':
@@ -813,6 +816,7 @@ class UserView(FlaskView):
                                 return add_headers(resp, c)
                             except Exception as e:
                                 return jsonify({'status': 502, 'msg': 'error:\n{e}'})
+
     @ route("/offline.html")
     @login_required(roles={Role.user})
     def offline():

@@ -124,7 +124,7 @@ elif [ "$major_version" -eq 10 ]; then
         pip_location_1="$pip_location_1/v1"
     elif [ "$minor_version" -eq 80 ]; then
         echo "HiddifyPanel version is 10.80"
-        base_location_api="$base_location_api/v10/v10.80.7"
+        base_location_api="$base_location_api/v10/v10.80.11"
         pip_location_1="$pip_location_1/v1"
     else
         display_error_and_exit "HiddifyPanel version is not supported!"
