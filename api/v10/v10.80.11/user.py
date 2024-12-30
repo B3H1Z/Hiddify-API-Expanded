@@ -16,7 +16,6 @@ from hiddifypanel.panel import hiddify
 from hiddifypanel.models import *
 from hiddifypanel import hutils
 
-
 import requests
 import json
 
@@ -30,47 +29,52 @@ formatter = logging.Formatter('%(asctime)s : %(levelname)s : %(name)s : %(messag
 file_handler.setFormatter(formatter)
 
 logger.addHandler(file_handler)
-class UserView(FlaskView):
 
-    @route('/useragent/')
-    @login_required(roles={Role.user})
-    def test(self):
-        ua = request.user_agent.string
-        print(ua)
-        return ua
+class UserView(FlaskView):
 
     def index(self):
         return self.auto_sub()
 
+    @route('/ua')
+    def user_agent(self):
+        ua= str(g.user_agent)+"\n"+str(request.user_agent)
+        print(ua)
+        return ua
+
     def auto_sub(self):
         if g.user_agent['is_browser']:
             return self.new()
-        return self.get_proper_config() or self.all_configs(base64=True)
+        return self.get_proper_config() or self.links_imp(base64=True)
 
     # former /sub/ or /sub (it was auto actually but we named it as /sub/)
     @route('/auto/')
     @route('/auto')
     @login_required(roles={Role.user})
     def force_sub(self):
-        return self.get_proper_config() or self.all_configs(base64=False)
+        return self.get_proper_config() or self.links_imp(base64=False)
 
     # region new endpoints
     @route("/sub/")
     @route("/sub")
     @login_required(roles={Role.user})
     def sub(self):
-        return self.all_configs(base64=False)
+        '''Returns proxy links (not base64 encoded)'''
+        return self.links_imp(base64=False)
 
     @route("/sub64/")
     @route("/sub64")
     @login_required(roles={Role.user})
     def sub64(self):
-        return self.all_configs(base64=True)
+        '''Returns proxy links (base64 encoded)'''
+        return self.links_imp(base64=True)
 
     @route("/xray/")
     @route("/xray")
     @login_required(roles={Role.user})
     def xray(self):
+        '''Returns Xray JSON proxy config'''
+        # if not hconfig(ConfigEnum.sub_full_xray_json_enable):
+        #     return 'The Full Xray subscription is disabled'
         urls = None
         c = get_common_data(g.account.uuid, mode="new")
         configs = hutils.proxy.xrayjson.configs_as_json(c['domains'], c['user'], c['expire_days'], c['profile_title'])
@@ -112,7 +116,7 @@ class UserView(FlaskView):
                     logger.exception(f"Error in loading {url} configs {e}")
             configs = json.dumps(configs_list, indent=2, cls=hutils.proxy.ProxyJsonEncoder)
         return add_headers(configs, c, 'application/json')
-    
+
     @route("/xray2/")
     @route("/xray2")
     @login_required(roles={Role.user})
@@ -123,30 +127,60 @@ class UserView(FlaskView):
         c = get_common_data(g.account.uuid, mode="new")
         configs = hutils.proxy.xrayjson.configs_as_json(c['domains'], c['user'], c['expire_days'], c['profile_title'])
         return add_headers(configs, c, 'application/json')
-
+    
     @route("/singbox/")
     @route("/singbox")
     @login_required(roles={Role.user})
     def singbox_full(self):
-        return self.full_singbox()
+        '''Returns singbox client JSON config'''
+        return self.full_singbox_imp()
 
     @route("/singbox-ssh/")
     @route("/singbox-ssh")
     @login_required(roles={Role.user})
     def singbox_ssh(self):
-        return self.singbox()
+        '''Returns singbox client JSON config (ssh)'''
+        return self.singbox_ssh_imp()
+
+    @route("/wireguard/")
+    @route("/wireguard")
+    @login_required(roles={Role.user})
+    def wireguard(self):
+        '''Returns wireguard client config'''
+        c = get_common_data(g.account.uuid, 'new')
+        wireguards = []
+        servers = set()
+        for pinfo in hutils.proxy.get_valid_proxies(c['domains']):
+            if pinfo['proto'] != ProxyProto.wireguard:
+                continue
+            wireguards.append(pinfo)
+
+            
+
+        if not len(wireguards):
+            abort(404)
+        resp =""
+        for wg in wireguards:
+            resp +=f'#========={wg["extra_info"]} {wg["name"]}================\n'
+            resp+=hutils.proxy.wireguard.generate_wireguard_config(wg)
+            resp+="\n\n"
+        return add_headers(resp, c)
+
+        # return self.singbox_ssh_imp()
 
     @route("/clash/")
     @route("/clash")
     @login_required(roles={Role.user})
     def clash(self):
-        return self.clash_config(meta_or_normal="normal")
+        '''Returns clash client config'''
+        return self.clash_config_imp(meta_or_normal="normal")
 
     @route("/clashmeta/")
     @route("/clashmeta")
     @login_required(roles={Role.user})
     def clashmeta(self):
-        return self.clash_config(meta_or_normal="meta")
+        '''Returns clash meta client config'''
+        return self.clash_config_imp(meta_or_normal="meta")
     # endregion
 
     @ route('/new/')
@@ -163,26 +197,28 @@ class UserView(FlaskView):
         return render_template('new.html', **c, ua=user_agent)
 
     def get_proper_config(self):
+        '''Returns proper config based on user agent'''
         if g.user_agent['is_browser']:
             return None
+
         ua = request.user_agent.string
         if g.user_agent['is_singbox'] or re.match('^(HiddifyNext|Dart|SFI|SFA)', ua, re.IGNORECASE):
-            return self.full_singbox()
+            return self.full_singbox_imp()
 
         if re.match('^(Clash-verge|Clash-?Meta|Stash|NekoBox|NekoRay|Pharos|hiddify-desktop)', ua, re.IGNORECASE):
-            return self.clash_config(meta_or_normal="meta")
+            return self.clash_config_imp(meta_or_normal="meta")
         if re.match('^(Clash|Stash)', ua, re.IGNORECASE):
-            return self.clash_config(meta_or_normal="normal")
+            return self.clash_config_imp(meta_or_normal="normal")
 
-        if g.user_agent.get('is_v2rayng'):
-            return self.xray()
+        if hconfig(ConfigEnum.sub_full_xray_json_enable):
+            # return the old "Subscription link b64" sub if the "Full Xray" sub is disabled (wanted by user)
+            if g.user_agent.get('is_v2rayng') and hutils.flask.is_client_version(hutils.flask.ClientVersion.v2ryang, 1, 8, 17):
+                return self.xray()
+            elif g.user_agent.get('is_streisand'):
+                return self.xray()
 
-        # if 'HiddifyNext' in ua or 'Dart' in ua:
-        #     return self.clash_config(meta_or_normal="meta")
-
-        # if any([p in ua for p in ['FoXray', 'HiddifyNG','Fair%20VPN' ,'v2rayNG', 'SagerNet']]):
-        if re.match('^(Hiddify|FoXray|Fair|v2rayNG|SagerNet|Shadowrocket|V2Box|Loon|Liberty)', ua, re.IGNORECASE):
-            return self.all_configs(base64=True)
+        if re.match('^(Hiddify|FoXray|Fair|v2rayNG|SagerNet|Shadowrocket|V2Box|Loon|Liberty|Streisand)', ua, re.IGNORECASE):
+            return self.links_imp(base64=True)
 
     @route('/clash/<meta_or_normal>/proxies.yml')
     @route('/clash/proxies.yml')
@@ -239,8 +275,12 @@ class UserView(FlaskView):
     @ route('/clash/<typ>.yml', methods=["GET", "HEAD"])
     @ route('/clash/<meta_or_normal>/<typ>.yml', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def clash_config(self, meta_or_normal="normal", typ="all.yml"):
+    def clash_config_imp(self, meta_or_normal="normal", typ="all.yml"):
         mode = request.args.get("mode")
+        if meta_or_normal == 'meta' and not hconfig(ConfigEnum.sub_full_clash_meta_enable):
+            return 'The Clash meta subscription is disabled'
+        elif meta_or_normal == 'normal' and not hconfig(ConfigEnum.sub_full_clash_enable):
+            return 'The Clash subscription is disabled'
 
         c = get_common_data(g.account.uuid, mode)
 
@@ -255,7 +295,10 @@ class UserView(FlaskView):
 
     @ route('/full-singbox.json', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def full_singbox(self):
+    def full_singbox_imp(self):
+        # if not hconfig(ConfigEnum.sub_full_singbox_enable):
+        #     return 'The Full Singbox subscription is disabled'
+
         mode = "new"  # request.args.get("mode")
         c = get_common_data(g.account.uuid, mode)
         # response.content_type = 'text/plain';
@@ -268,23 +311,27 @@ class UserView(FlaskView):
 
     @ route('/singbox.json', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def singbox(self):
+    def singbox_ssh_imp(self):
         if not hconfig(ConfigEnum.ssh_server_enable):
-            return "SSH server is disable in settings"
+            return "The SSH server is disabled"
+        # elif not hconfig(ConfigEnum.sub_singbox_ssh_enable):
+        #     return "The Singbox: SSH subscription is disabled"
+
         mode = "new"  # request.args.get("mode")
         c = get_common_data(g.account.uuid, mode)
         # response.content_type = 'text/plain';
         if request.method == 'HEAD':
             resp = ""
         else:
-            resp = render_template('singbox_config.json', **c, host_keys=hutils.proxy.get_ssh_hostkeys(True),
+            resp = render_template('singbox_config.json', **c, host_keys=hutils.proxy.get_ssh_hostkeys(get_hconfigs(),True),
                                    ssh_client_version=hiddify.get_ssh_client_version(user), ssh_ip=hutils.network.get_direct_host_or_ip(4), base64=False)
 
         return add_headers(resp, c)
 
     @route('/all.txt', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def all_configs(self, base64=False):
+    def links_imp(self, base64=False):
+        '''Returns subscription links (base64 or not)'''
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
         bot_configs = None
@@ -420,12 +467,18 @@ class UserView(FlaskView):
         if base64:
             resp = hutils.encode.do_base_64(resp)
         return add_headers(resp, c)
-
+    
     @route('/all2.txt', methods=["GET", "HEAD"])
     @login_required(roles={Role.user})
-    def all_configs2(self, base64=False):
+    def links_imp2(self, base64=False):
+        '''Returns subscription links (base64 or not)'''
         mode = "new"  # request.args.get("mode")
         base64 = base64 or request.args.get("base64", "").lower() == "true"
+        # if base64 and not hconfig(ConfigEnum.sub_full_links_b64_enable):
+        #     return 'The Subscription link b64 is disabled'
+        # if not base64 and not hconfig(ConfigEnum.sub_full_links_enable):
+        #     return 'The Subscription link is disabled'
+
         c = get_common_data(g.account.uuid, mode)
         # response.content_type = 'text/plain';
         if request.method == 'HEAD':
@@ -437,8 +490,7 @@ class UserView(FlaskView):
         if base64:
             resp = hutils.encode.do_base_64(resp)
         return add_headers(resp, c)
-
-
+    
     @ route('/hidybot.txt', methods=["GET", "HEAD"])
     def hidybot_configs(self, base64=False):
         mode = "new"  # request.args.get("mode")
@@ -764,6 +816,7 @@ class UserView(FlaskView):
                                 return add_headers(resp, c)
                             except Exception as e:
                                 return jsonify({'status': 502, 'msg': 'error:\n{e}'})
+
     @ route("/offline.html")
     @login_required(roles={Role.user})
     def offline():
@@ -895,6 +948,9 @@ def add_headers(res, c, mimetype="text/plain"):
     resp.mimetype = mimetype
     resp.headers['Subscription-Userinfo'] = f"upload=0;download={c['usage_current_b']};total={c['usage_limit_b']};expire={c['expire_s']}"
     resp.headers['profile-web-page-url'] = request.base_url.rsplit('/', 1)[0].replace("http://", "https://") + "/"
+    # resp.headers['test-url'] = f"http://127.0.0.1:90/{hconfig(ConfigEnum.proxy_path_client)}/generate_204"
+    # resp.headers['test-url'] = f"http://{request.host}/{hconfig(ConfigEnum.proxy_path_client)}/generate_204"
+    # resp.headers['test-url'] = "http://connectivitycheck.gstatic.com/generate_204"
 
     if hconfig(ConfigEnum.branding_site):
         resp.headers['support-url'] = hconfig(ConfigEnum.branding_site)
