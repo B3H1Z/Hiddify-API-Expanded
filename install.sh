@@ -129,7 +129,10 @@ elif [ "$major_version" -eq 10 ]; then
     else
         display_error_and_exit "HiddifyPanel version is not supported!"
     fi
-
+elif [ "$major_version" -eq 11 ]; then
+    echo "HiddifyPanel version is 11"
+    base_location_api="$base_location_api/v11/v11.0.0"
+    pip_location_1="$pip_location_1/v1"
 else
     display_error_and_exit "HiddifyPanel version is not supported!"
 fi
