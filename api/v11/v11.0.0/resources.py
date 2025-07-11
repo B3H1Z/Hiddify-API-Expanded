@@ -255,17 +255,19 @@ class Status(Resource):
     decorators = [login_required({Role.super_admin})]
     def get(self):
         config_file = '/usr/local/bin/hiddify-api-expanded/version.json'
-        cron_file = '/etc/cron.d/hiddify_usage_update'
+        # cron_file = '/etc/cron.d/hiddify_usage_update'
         try:
             if os.path.isfile(config_file):
                 with open(config_file, 'r') as f:
                     version = json.load(f)
-                with open(cron_file, 'r') as f:
-                    cron = f.read()
-                cron = re.sub(r'\s+', ' ', cron).strip()
-                if cron == '':
-                    cron = False
-                return jsonify({'status': 200, 'msg': 'ok', 'data': {'version': version, 'cron': cron, 'panel_version':__version__}})
+                # with open(cron_file, 'r') as f:
+                    # cron = f.read()
+                # cron = re.sub(r'\s+', ' ', cron).strip()
+                # if cron == '':
+                    # cron = False
+                # return jsonify({'status': 200, 'msg': 'ok', 'data': {'version': version, 'cron': cron, 'panel_version':__version__}})
+                return jsonify({'status': 200, 'msg': 'ok', 'data': {'version': version, 'panel_version':__version__}})
+            
             else:
                 return jsonify({'status': 502, 'msg': 'error\nversion file not found'})
         except Exception as e:
