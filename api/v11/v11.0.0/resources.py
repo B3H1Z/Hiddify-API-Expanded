@@ -217,7 +217,7 @@ class UpdateUsage(Resource):
     decorators = [login_required({Role.super_admin})]        
     def get(self):
         try:
-            log_dir = '/opt/hiddify-config/log'
+            log_dir = '/opt/hiddify-manager/log'
             lock_file_path = os.path.join(log_dir, 'update_usage.lock')
 
             if os.path.isfile(lock_file_path) and (time.time() - os.path.getmtime(lock_file_path)) < 300:
